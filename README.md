@@ -99,13 +99,6 @@ npm run dev
 | `npm start` | Ejecutar build compilado |
 | `npm test` | Ejecutar pruebas |
 
-## Ramas de Trabajo
-
-| Rama | Integrante |
-|---|---|
-| `nahia-branch` | Nahia Montoya |
-| `oscar-branch` | Óscar Barón |
-
 > Los cambios se integran a `main` únicamente mediante Pull Request con aprobación.
 
 ## Privacidad y Cumplimiento Legal
