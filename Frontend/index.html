@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLARA – Clinical Learning Assistant for Radiology Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+
+  <!-- ══ LOGIN ══ -->
+  <div class="auth-wrap" id="screen-login">
+    <div class="auth-brand">
+      <div class="logo-big">Cl<span class="logo-dot">✳</span>ra</div>
+      <div class="tagline">Clinical Learning Assistant<br>for Radiology Analysis</div>
+    </div>
+    <div class="auth-content">
+      <button class="auth-top-link" onclick="showScreen('screen-register')">Crear cuenta</button>
+      <div class="auth-form">
+        <h2>Iniciar sesión</h2>
+        <p class="subtitle">Accede a tu cuenta médica</p>
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" id="login-email" placeholder="correo@hospital.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="login-pass" placeholder="••••••••">
+        </div>
+        <button class="btn-primary" onclick="loginSuccess()">Iniciar sesión</button>
+        <div class="auth-link">
+          <span onclick="showScreen('screen-recovery')">¿Olvidaste tu contraseña?</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ REGISTRO ══ -->
+  <div class="auth-wrap hidden" id="screen-register">
+    <div class="auth-brand">
+      <div class="logo-big">Cl<span class="logo-dot">✳</span>ra</div>
+      <div class="tagline">Clinical Learning Assistant<br>for Radiology Analysis</div>
+    </div>
+    <div class="auth-content">
+      <button class="auth-top-link" onclick="showScreen('screen-login')">Iniciar sesión</button>
+      <div class="auth-form">
+        <h2>Crear cuenta</h2>
+        <p class="subtitle">Únete a la plataforma CLARA</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" placeholder="María">
+          </div>
+          <div class="form-group">
+            <label>Apellido</label>
+            <input type="text" placeholder="García">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" placeholder="+57">
+          </div>
+          <div class="form-group">
+            <label>Especialidad</label>
+            <select>
+              <option value="">Seleccione una opción</option>
+              <option>Neurología</option>
+              <option>Radiología</option>
+              <option>Psiquiatría</option>
+              <option>Geriatría</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" placeholder="correo@">
+          </div>
+          <div class="form-group">
+            <label>Fecha de nacimiento</label>
+            <input type="date">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" placeholder="Contraseña">
+          </div>
+          <div class="form-group">
+            <label>Confirmar contraseña</label>
+            <input type="password" placeholder="Confirmar">
+          </div>
+        </div>
+        <button class="btn-primary" onclick="registerSuccess()">Crear cuenta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RECUPERACIÓN ══ -->
+  <div class="auth-wrap hidden" id="screen-recovery">
+    <div class="auth-brand">
+      <div class="logo-big">Cl<span class="logo-dot">✳</span>ra</div>
+      <div class="tagline">Clinical Learning Assistant<br>for Radiology Analysis</div>
+    </div>
+    <div class="auth-content">
+      <button class="auth-top-link" onclick="showScreen('screen-login')">Iniciar sesión</button>
+      <div class="auth-form auth-form--centered">
+        <div class="lock-icon">🔒</div>
+        <h2>¿Olvidaste tu contraseña?</h2>
+        <p class="subtitle">Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" placeholder="correo@">
+        </div>
+        <button class="btn-primary" onclick="recoverySuccess()">Enviar enlace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODALES ══ -->
+  <div class="modal-overlay" id="modal-register">
+    <div class="modal-box">
+      <div class="modal-icon">✓</div>
+      <h3>¡Éxito!</h3>
+      <p>Cuenta creada y verificada con éxito.<br>Ahora puedes iniciar sesión.</p>
+      <button class="btn-secondary" onclick="closeModal('modal-register'); showScreen('screen-login')">Continuar</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-recovery">
+    <div class="modal-box">
+      <div class="modal-icon">✓</div>
+      <h3>Correo enviado</h3>
+      <p>Revisa tu bandeja de entrada para continuar con el proceso de recuperación.</p>
+      <button class="btn-secondary" onclick="closeModal('modal-recovery'); showScreen('screen-login')">Volver</button>
+    </div>
+  </div>
+
+  <div class="progress-overlay" id="modal-progress">
+    <div class="progress-box">
+      <h4>Analizando imagen MRI</h4>
+      <p>El análisis puede tardar entre 30 segundos y 2 minutos dependiendo del tamaño de la imagen.</p>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="prog-bar"></div>
+      </div>
+      <div class="progress-step" id="prog-step">Recibiendo imagen...</div>
+    </div>
+  </div>
+
+  <!-- ══ APP ══ -->
+  <div class="app-wrap hidden" id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">Cl<span>✳</span>ra</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="page-dashboard" onclick="navigate(this, 'page-dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Inicio
+        </button>
+        <button class="nav-item" data-page="page-analisis" onclick="navigate(this, 'page-analisis')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Análisis imagen
+        </button>
+        <button class="nav-item" data-page="page-resultados" onclick="navigate(this, 'page-resultados')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Resultados
+        </button>
+        <button class="nav-item" data-page="page-config" onclick="navigate(this, 'page-config')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Configuración
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="logout()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <h1 class="page-title">Bienvenido a CLARA</h1>
+        <p class="page-sub">Sistema de análisis de imágenes médicas con inteligencia artificial</p>
+        <div class="dash-cards">
+          <div class="dash-card" onclick="navigate(document.querySelector('[data-page=page-analisis]'), 'page-analisis')">
+            <div class="card-icon">🧠</div>
+            <div class="card-title">Análisis IA</div>
+            <div class="card-desc">Análisis avanzado con redes neuronales</div>
+          </div>
+          <div class="dash-card" onclick="navigate(document.querySelector('[data-page=page-resultados]'), 'page-resultados')">
+            <div class="card-icon">📋</div>
+            <div class="card-title">Resultados</div>
+            <div class="card-desc">Accede a los resultados obtenidos</div>
+          </div>
+          <div class="dash-card" onclick="navigate(document.querySelector('[data-page=page-config]'), 'page-config')">
+            <div class="card-icon">⚙️</div>
+            <div class="card-title">Configuración</div>
+            <div class="card-desc">Accede a la configuración de la cuenta</div>
+          </div>
+        </div>
+        <div class="dash-cta">
+          <h3>Comenzar análisis</h3>
+          <p>Selecciona una nueva imagen para empezar a trabajar con el sistema CLARA.</p>
+          <button class="btn-cta" onclick="navigate(document.querySelector('[data-page=page-analisis]'), 'page-analisis')">Analizar imagen</button>
+        </div>
+      </div>
+
+      <!-- ANÁLISIS IMAGEN -->
+      <div class="page" id="page-analisis">
+        <h1 class="page-title">Analizar Imagen</h1>
+        <p class="page-sub">Sube una imagen médica para análisis con IA</p>
+        <div class="analisis-grid">
+          <div>
+            <div class="upload-zone" id="upload-zone"
+              onclick="simulateUpload()"
+              ondragover="event.preventDefault(); this.classList.add('drag')"
+              ondragleave="this.classList.remove('drag')"
+              ondrop="event.preventDefault(); this.classList.remove('drag'); simulateUpload()">
+              <div class="upload-icon">↑</div>
+              <h4>Click para subir imagen</h4>
+              <p>NIfTI .nii / DICOM .dcm</p>
+            </div>
+            <div class="file-loaded hidden" id="file-loaded">
+              <div class="file-chip">
+                📄 scan_cerebral_04272026.nii
+                <span class="file-chip-remove" onclick="removeFile()">✕</span>
+              </div>
+              <p>Archivo cargado correctamente. Configura los parámetros y presiona <strong>Iniciar análisis</strong>.</p>
+            </div>
+          </div>
+          <div class="config-panel">
+            <h4>Configuración de análisis</h4>
+            <div class="config-row">
+              <label>Modelo IA</label>
+              <select id="model-select">
+                <option>ResNet-50</option>
+                <option>VGG16</option>
+              </select>
+            </div>
+            <div class="config-row">
+              <label>Umbral de confianza (%)</label>
+              <input type="number" id="threshold-input" value="87.2" min="80" max="99" step="0.1">
+              <div class="config-hint">Confianza mínima requerida para considerar un resultado válido</div>
+            </div>
+            <div class="config-row">
+              <label class="checkbox-row">
+                <input type="checkbox" id="gradcam-check" checked>
+                Generar Grad-CAM
+              </label>
+            </div>
+            <button class="btn-analizar" onclick="iniciarAnalisis()">Iniciar análisis</button>
+            <div class="info-note">El análisis puede tardar entre 30 segundos y 2 minutos dependiendo del tamaño de la imagen.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTADOS -->
+      <div class="page" id="page-resultados">
+        <h1 class="page-title">Detalles Completos del Análisis</h1>
+        <p class="page-sub">Resumen del diagnóstico generado por IA</p>
+        <div class="results-summary">
+          <div class="result-card">
+            <div class="r-label">Tipo de estudio</div>
+            <div class="r-value r-value--sm">Resonancia Magnética Cerebral</div>
+          </div>
+          <div class="result-card">
+            <div class="r-label">Clasificación</div>
+            <span class="r-badge r-badge--normal" id="result-badge">Normal</span>
+          </div>
+          <div class="result-card">
+            <div class="r-label">Confianza</div>
+            <div class="r-value" id="result-conf">94.5%</div>
+          </div>
+          <div class="result-card">
+            <div class="r-label">Fecha</div>
+            <div class="r-value r-value--sm" id="result-fecha">27 de Abril, 2026</div>
+          </div>
+        </div>
+
+        <div class="images-grid">
+          <div class="img-panel">
+            <div class="img-label">Imagen MRI Original</div>
+            <div class="mri-mock">
+              <svg width="160" height="180" viewBox="0 0 160 180">
+                <ellipse cx="80" cy="85" rx="65" ry="75" fill="#2a2a2a"/>
+                <ellipse cx="80" cy="85" rx="55" ry="65" fill="#3a3a3a"/>
+                <ellipse cx="80" cy="75" rx="40" ry="45" fill="#484848"/>
+                <ellipse cx="60" cy="80" rx="20" ry="25" fill="#555"/>
+                <ellipse cx="100" cy="80" rx="20" ry="25" fill="#555"/>
+                <ellipse cx="80" cy="115" rx="18" ry="14" fill="#3a3a3a"/>
+                <line x1="80" y1="30" x2="80" y2="150" stroke="#1a1a1a" stroke-width="1"/>
+              </svg>
+            </div>
+          </div>
+          <div class="img-panel">
+            <div class="img-label">Mapa de Calor Grad-CAM</div>
+            <img id="gradcam-img" src="" alt="Grad-CAM" style="display:none;width:100%;height:220px;object-fit:cover;">
+            <div class="gradcam-mock">
+              <svg width="160" height="180" viewBox="0 0 160 180">
+                <defs>
+                  <radialGradient id="heat1" cx="50%" cy="45%">
+                    <stop offset="0%" stop-color="#E53935" stop-opacity="0.9"/>
+                    <stop offset="30%" stop-color="#FFA726" stop-opacity="0.7"/>
+                    <stop offset="60%" stop-color="#9CCC65" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#1565C0" stop-opacity="0.3"/>
+                  </radialGradient>
+                </defs>
+                <ellipse cx="80" cy="85" rx="65" ry="75" fill="#1565C0" opacity="0.4"/>
+                <ellipse cx="80" cy="80" rx="50" ry="60" fill="url(#heat1)" opacity="0.85"/>
+                <ellipse cx="80" cy="75" rx="30" ry="35" fill="#FFA726" opacity="0.6"/>
+                <ellipse cx="80" cy="72" rx="15" ry="18" fill="#E53935" opacity="0.7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="regions-section">
+          <div class="regions-header">Análisis Detallado de Regiones Cerebrales</div>
+          <div class="region-row">
+            <div class="region-top">
+              <div class="region-name">Hipocampo</div>
+              <span class="r-badge r-badge--normal">Normal</span>
+            </div>
+            <div class="region-desc">Nivel de Activación — 30%</div>
+            <div class="activation-bar"><div class="activation-fill" style="width:30%"></div></div>
+            <div class="region-note">La región hipocampo muestra patrones de actividad dentro de los rangos normales esperados.</div>
+          </div>
+          <div class="region-row">
+            <div class="region-top">
+              <div class="region-name">Córtex frontal</div>
+              <span class="r-badge r-badge--normal">Normal</span>
+            </div>
+            <div class="region-desc">Nivel de Activación — 8%</div>
+            <div class="activation-bar"><div class="activation-fill" style="width:8%"></div></div>
+            <div class="region-note">La región córtex frontal muestra patrones de actividad dentro de los rangos normales esperados.</div>
+          </div>
+          <div class="region-row">
+            <div class="region-top">
+              <div class="region-name">Amígdala</div>
+              <span class="r-badge r-badge--mild">Leve</span>
+            </div>
+            <div class="region-desc">Nivel de Activación — 55%</div>
+            <div class="activation-bar"><div class="activation-fill activation-fill--warn" style="width:55%"></div></div>
+            <div class="region-note">Se detecta activación moderada. Se recomienda seguimiento.</div>
+          </div>
+        </div>
+
+        <div class="legend-bar">
+          <h5>Leyenda — Mapa de calor Grad-CAM</h5>
+          <div class="legend-gradient"></div>
+          <div class="legend-labels">
+            <span>Azul<br>Baja activación</span>
+            <span>Cian / Verde<br>Activación moderada</span>
+            <span>Amarillo / Naranja<br>Activación alta</span>
+            <span>Rojo<br>Máxima activación</span>
+          </div>
+        </div>
+
+        <div class="tech-info">
+          <h5>Información Técnica del Análisis</h5>
+          <div class="tech-grid">
+            <div>
+              <div class="tech-row"><span class="t-label">Modelo IA:</span><span class="t-val" id="tech-model">VGG16 + Grad-CAM</span></div>
+              <div class="tech-row"><span class="t-label">Algoritmo de Clasificación:</span><span class="t-val">Deep Learning CNN</span></div>
+              <div class="tech-row"><span class="t-label">Tiempo de Procesamiento:</span><span class="t-val">1.2 segundos</span></div>
+            </div>
+            <div>
+              <div class="tech-row"><span class="t-label">Resolución de Imagen:</span><span class="t-val">512×512 px</span></div>
+              <div class="tech-row"><span class="t-label">Dataset de Entrenamiento:</span><span class="t-val">ADNI + OASIS</span></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-export" onclick="showToast('Exportando informe PDF...')">
+          📄 Exportar informe completo (PDF)
+        </button>
+      </div>
+
+      <!-- CONFIGURACIÓN -->
+      <div class="page" id="page-config">
+        <h1 class="page-title">Configuración</h1>
+        <p class="page-sub">Personaliza tu experiencia con CLARA</p>
+        <div class="config-section">
+          <div class="config-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Perfil de usuario
+          </div>
+          <div class="config-form-grid">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input type="text" value="Doctor Prueba">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" value="DoctorPrueba@hotmail.com">
+            </div>
+            <div class="form-group">
+              <label>Especialidad</label>
+              <select>
+                <option>Neurología</option>
+                <option>Radiología</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="text" value="+57 ">
+            </div>
+          </div>
+          <button class="btn-save" onclick="showToast('Perfil guardado correctamente')">Guardar cambios</button>
+        </div>
+        <div class="config-section">
+          <div class="config-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Seguridad
+          </div>
+          <div class="form-group form-group--narrow">
+            <label>Contraseña actual</label>
+            <input type="password" value="••••••••••">
+          </div>
+          <div class="form-group form-group--narrow">
+            <label>Nueva contraseña</label>
+            <input type="password" placeholder="Nueva contraseña">
+          </div>
+          <div class="form-group form-group--narrow">
+            <label>Confirmar nueva contraseña</label>
+            <input type="password" placeholder="Confirmar contraseña">
+          </div>
+          <button class="btn-save" onclick="showToast('Contraseña actualizada')">Actualizar contraseña</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/navigation.js"></script>
+  <script src="js/analisis.js"></script>
+  <script src="js/utils.js"></script>
+</body>
+</html>
