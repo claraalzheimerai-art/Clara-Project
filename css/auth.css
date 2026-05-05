@@ -1,0 +1,165 @@
+/* ══════════════════════════════════════
+   CLARA – Auth Screens
+   ══════════════════════════════════════ */
+
+.auth-wrap {
+  display: flex;
+  min-height: 100vh;
+  background: var(--beige);
+}
+
+/* Panel izquierdo - marca */
+.auth-brand {
+  width: 320px;
+  background: var(--charcoal);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  flex-shrink: 0;
+}
+
+.logo-big {
+  font-family: var(--font-display);
+  font-size: 52px;
+  color: var(--white);
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.logo-dot {
+  color: var(--accent);
+}
+
+.tagline {
+  font-size: 11px;
+  color: var(--gray-muted);
+  text-align: center;
+  margin-top: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Panel derecho - contenido */
+.auth-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  position: relative;
+}
+
+.auth-top-link {
+  position: absolute;
+  top: 2rem;
+  right: 2.5rem;
+  font-size: 13px;
+  color: var(--gray-text);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-main);
+  transition: color 0.2s;
+}
+
+.auth-top-link:hover {
+  color: var(--charcoal);
+  text-decoration: underline;
+}
+
+/* Formulario */
+.auth-form {
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth-form--centered {
+  text-align: center;
+}
+
+.auth-form h2 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin-bottom: 6px;
+}
+
+.auth-form .subtitle {
+  font-size: 13px;
+  color: var(--gray-text);
+  margin-bottom: 2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--gray-text);
+  margin-bottom: 5px;
+  letter-spacing: 0.02em;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: var(--charcoal);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input::placeholder {
+  color: var(--gray-muted);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--accent);
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--gray-text);
+}
+
+.auth-link span {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.auth-link span:hover {
+  text-decoration: underline;
+}
+
+/* Recovery */
+.lock-icon {
+  width: 50px;
+  height: 50px;
+  background: var(--beige-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 22px;
+}
