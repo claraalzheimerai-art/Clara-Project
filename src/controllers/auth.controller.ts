@@ -1,167 +1,98 @@
-import { Request, Response, NextFunction } from 'express';
-import { authService } from '../services/auth.service';
-import { successResponse, errorResponse } from '../models/api.model';
-import { logger } from '../utils/logger';
+// ============================================================
+// CLARA — Auth Controller (userId: number)
+// ============================================================
 
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+import { NextFunction, Request, Response } from 'express';
+import { AuthService } from '../services/auth.service';
+import { ChangePasswordDto, LoginDto, RegisterDto } from '../types/auth.types';
+
+function ok(res: Response, data: unknown, status = 200): void {
+  res.status(status).json({
+    success: true,
+    data,
+    meta: { timestamp: new Date().toISOString() },
+  });
+}
+
+// POST /api/v1/auth/register
+export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { nombre, apellido, email, password } = req.body;
-
-    if (!nombre || !apellido || !email || !password) {
-      res.status(400).json(errorResponse('Todos los campos son requeridos'));
-      return;
-    }
-
-    const user = await authService.register({ nombre, apellido, email, password });
-
-    res.status(201).json(successResponse({
-      message:           'Cuenta creada. Revisa tu email para verificarla.',
-      verificationToken: user.verificationToken,
-      email:             user.email,
-    }));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('registrado')) {
-      res.status(409).json(errorResponse(error.message));
-      return;
-    }
-    next(error);
+    const result = await AuthService.register(req.body as RegisterDto);
+    ok(res, result, 201);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+// POST /api/v1/auth/login
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      res.status(400).json(errorResponse('Email y contraseña son requeridos'));
-      return;
-    }
-
-    const { user, tokens } = await authService.login({ email, password });
-
-    res.json(successResponse({
-      user: {
-        id:       user._id,
-        nombre:   user.nombre,
-        apellido: user.apellido,
-        email:    user.email,
-        role:     user.role,
-      },
-      tokens,
-    }));
-  } catch (error) {
-    if (error instanceof Error) {
-      res.status(401).json(errorResponse(error.message));
-      return;
-    }
-    next(error);
+    const result = await AuthService.login(req.body as LoginDto);
+    ok(res, result);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
-export const verifyEmail = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+// POST /api/v1/auth/refresh
+export async function refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
-    await authService.verifyEmail(token);
-    res.json(successResponse({ message: 'Email verificado exitosamente' }));
-  } catch (error) {
-    res.status(400).json(errorResponse('Token de verificación inválido'));
-  }
-};
-
-export const forgotPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      res.status(400).json(errorResponse('Email es requerido'));
+    const { refreshToken } = req.body ?? {};
+    if (!refreshToken || typeof refreshToken !== 'string') {
+      res.status(400).json({
+        success: false,
+        message: 'refreshToken requerido',
+        meta: { timestamp: new Date().toISOString() },
+      });
       return;
     }
-    const resetToken = await authService.forgotPassword(email);
-    res.json(successResponse({
-      message:    'Instrucciones enviadas a tu email',
-      resetToken,
-    }));
-  } catch (error) {
-    res.status(404).json(errorResponse('Email no encontrado'));
+    const result = await AuthService.refreshToken(refreshToken);
+    ok(res, result);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
-export const resetPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+// POST /api/v1/auth/logout
+export async function logout(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const token           = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
-    const { newPassword } = req.body;
-
-    if (!newPassword || newPassword.length < 8) {
-      res.status(400).json(errorResponse('La contraseña debe tener al menos 8 caracteres'));
-      return;
-    }
-
-    await authService.resetPassword(token, newPassword);
-    res.json(successResponse({ message: 'Contraseña restablecida exitosamente' }));
-  } catch (error) {
-    res.status(400).json(errorResponse('Token inválido o expirado'));
+    const { refreshToken } = req.body ?? {};
+    if (refreshToken) await AuthService.logout(refreshToken);
+    ok(res, { message: 'Sesión cerrada correctamente' });
+  } catch (err) {
+    next(err);
   }
-};
+}
 
-export const refreshToken = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+// GET /api/v1/auth/me
+export async function getMe(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-      res.status(400).json(errorResponse('Refresh token requerido'));
-      return;
-    }
-    const tokens = await authService.refreshTokens(refreshToken);
-    res.json(successResponse({ tokens }));
-  } catch (error) {
-    res.status(401).json(errorResponse('Refresh token inválido o expirado'));
+    const user = await AuthService.getProfile(req.user!.sub);
+    ok(res, user);
+  } catch (err) {
+    next(err);
   }
-};
+}
 
-export const getProfile = async (
-  req: any,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+// PATCH /api/v1/auth/me
+export async function updateMe(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { User } = await import('../models/user.model');
-    const user     = await User.findById(req.user.userId);
-    if (!user) {
-      res.status(404).json(errorResponse('Usuario no encontrado'));
-      return;
-    }
-    res.json(successResponse({
-      id:            user._id,
-      nombre:        user.nombre,
-      apellido:      user.apellido,
-      email:         user.email,
-      role:          user.role,
-      emailVerified: user.emailVerified,
-      createdAt:     user.createdAt,
-    }));
-  } catch (error) {
-    next(error);
+    const { nombre, apellido, especialidad, institucion, telefono } = req.body;
+    const user = await AuthService.updateProfile(req.user!.sub, {
+      nombre, apellido, especialidad, institucion, telefono,
+    });
+    ok(res, user);
+  } catch (err) {
+    next(err);
   }
-};
+}
+
+// PATCH /api/v1/auth/me/password
+export async function changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    await AuthService.changePassword(req.user!.sub, req.body as ChangePasswordDto);
+    ok(res, { message: 'Contraseña actualizada correctamente' });
+  } catch (err) {
+    next(err);
+  }
+}

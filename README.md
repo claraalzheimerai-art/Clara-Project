@@ -44,7 +44,7 @@ Sistema de Diagnóstico Temprano de Alzheimer — Backend (Node.js + TypeScript)
 
 ## Estructura del Proyecto
 ```
-clara-backend/
+Clara-Project\Backend
 ├── src/
 │   ├── config/            # Variables de entorno y configuración Multer
 │   ├── controllers/       # Lógica de endpoints
@@ -77,8 +77,9 @@ clara-backend/
 ## Instalación
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/claraalzheimerai-art/clara-backend.git
-cd clara-backend
+git clone https://github.com/claraalzheimerai-art/Clara-Project.git
+
+cd Clara-Project
 
 # 2. Instalar dependencias
 npm install

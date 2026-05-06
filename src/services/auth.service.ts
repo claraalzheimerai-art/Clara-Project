@@ -1,159 +1,194 @@
+// ============================================================
+// CLARA — Auth Service (MySQL / UserModel)
+// ============================================================
+
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
-import { UserModel, IUser } from '../models/user.model';
+import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger';
+import { IUser, UserModel } from '../models/user.model';
+import {
+  AUTH_CONSTANTS,
+  AuthResponse,
+  ChangePasswordDto,
+  JwtPayload,
+  LoginDto,
+  PublicUser,
+  RegisterDto,
+  toPublicUser,
+} from '../types/auth.types';
 
-export interface TokenPayload {
-  userId: string;
-  email: string;
-  role: string;
+// ── Refresh token store ──────────────────────────────────────
+// En memoria por ahora — en producción migrar a Redis o tabla refresh_tokens
+const refreshTokenStore = new Map<string, number>(); // refreshToken → userId
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET no configurado en .env');
+  return secret;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
+function buildPayload(user: IUser): Omit<JwtPayload, 'iat' | 'exp'> {
+  return { sub: user.id, email: user.email, rol: user.role, nombre: user.nombre };
 }
 
-export interface RegisterDTO {
-  nombre: string;
-  apellido: string;
-  email: string;
-  password: string;
+function generateTokenPair(user: IUser): { token: string; refreshToken: string } {
+  const token = jwt.sign(buildPayload(user), getJwtSecret(), {
+    expiresIn: AUTH_CONSTANTS.TOKEN_EXPIRY,
+  });
+  const refreshToken = uuidv4();
+  refreshTokenStore.set(refreshToken, user.id);
+  return { token, refreshToken };
 }
 
-export interface LoginDTO {
-  email: string;
-  password: string;
-}
+// ── Service ──────────────────────────────────────────────────
+export const AuthService = {
 
-class AuthService {
+  // ── Register ───────────────────────────────────────────────
+  async register(dto: RegisterDto): Promise<AuthResponse> {
+    const existe = await UserModel.findByEmail(dto.email);
+    if (existe) {
+      const err = new Error('El correo ya está registrado');
+      (err as any).statusCode = 409;
+      throw err;
+    }
 
-  generateTokens(user: IUser): AuthTokens {
-    const payload: TokenPayload = {
-      userId: user.id.toString(),
-      email: user.email,
-      role: user.role,
-    };
+    if (dto.password.length < AUTH_CONSTANTS.PASSWORD_MIN_LENGTH) {
+      const err = new Error(
+        `La contraseña debe tener al menos ${AUTH_CONSTANTS.PASSWORD_MIN_LENGTH} caracteres`,
+      );
+      (err as any).statusCode = 400;
+      throw err;
+    }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) throw new Error('JWT_SECRET is not defined');
-
-    const accessToken = jwt.sign(
-      payload,
-      jwtSecret,
-      { expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as jwt.SignOptions['expiresIn'] }
-    );
-
-    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
-    if (!jwtRefreshSecret) throw new Error('JWT_REFRESH_SECRET is not defined');
-
-    const refreshToken = jwt.sign(
-      { userId: user.id.toString() },
-      jwtRefreshSecret,
-      { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'] }
-    );
-
-    return { accessToken, refreshToken };
-  }
-
-  verifyAccessToken(token: string): TokenPayload {
-    return jwt.verify(token, process.env.JWT_SECRET!) as TokenPayload;
-  }
-
-  verifyRefreshToken(token: string): { userId: string } {
-    return jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as { userId: string };
-  }
-
-  generateVerificationToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
-  generateResetToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
-  async register(dto: RegisterDTO): Promise<IUser> {
-    const exists = await UserModel.findByEmail(dto.email.toLowerCase());
-    if (exists) throw new Error('El email ya está registrado');
-
-    const verificationToken = this.generateVerificationToken();
-
+    const verificationToken = uuidv4();
     const user = await UserModel.create({
-      ...dto,
-      email: dto.email.toLowerCase(),
+      nombre:             dto.nombre,
+      apellido:           dto.apellido,
+      email:              dto.email,
+      password:           dto.password,       // UserModel.create ya hashea
       verification_token: verificationToken,
     });
 
-    logger.info(`Usuario registrado: ${user.email}`);
-    return user;
-  }
+    logger.info(`Nuevo usuario registrado: ${user.email} (id=${user.id})`);
 
-  async login(dto: LoginDTO): Promise<{ user: IUser; tokens: AuthTokens }> {
-    const user = await UserModel.findByEmail(dto.email.toLowerCase());
-    if (!user) throw new Error('Credenciales inválidas');
+    const { token, refreshToken } = generateTokenPair(user);
+    return { token, refreshToken, user: toPublicUser(user) };
+  },
 
-    const valid = await UserModel.comparePassword(dto.password, user.password);
-    if (!valid) throw new Error('Credenciales inválidas');
+  // ── Login ──────────────────────────────────────────────────
+  async login(dto: LoginDto): Promise<AuthResponse> {
+    const user = await UserModel.findByEmail(dto.email);
 
-    if (!user.email_verified) throw new Error('Debes verificar tu email antes de iniciar sesión');
+    // Hash dummy para mantener tiempo constante aunque el usuario no exista
+    const dummyHash = '$2a$12$invalidhashusedfortimingatk00000000000000000000000000';
+    const passwordOk = await UserModel.comparePassword(
+      dto.password,
+      user?.password ?? dummyHash,
+    );
 
-    const tokens = this.generateTokens(user);
+    if (!user || !passwordOk) {
+      const err = new Error('Credenciales inválidas');
+      (err as any).statusCode = 401;
+      throw err;
+    }
+
+    if (!user.email_verified) {
+      const err = new Error('Debes verificar tu correo antes de iniciar sesión');
+      (err as any).statusCode = 403;
+      throw err;
+    }
+
     logger.info(`Login exitoso: ${user.email}`);
-    return { user, tokens };
-  }
+    const { token, refreshToken } = generateTokenPair(user);
+    return { token, refreshToken, user: toPublicUser(user) };
+  },
 
-  async verifyEmail(token: string): Promise<IUser> {
-    const user = await UserModel.findByVerificationToken(token);
-    if (!user) throw new Error('Token de verificación inválido');
+  // ── Refresh Token ──────────────────────────────────────────
+  async refreshToken(refreshToken: string): Promise<{ token: string }> {
+    const userId = refreshTokenStore.get(refreshToken);
+    if (userId === undefined) {
+      const err = new Error('Refresh token inválido o expirado');
+      (err as any).statusCode = 401;
+      throw err;
+    }
 
-    await UserModel.update(user.id, {
-      email_verified: true,
-      verification_token: null,
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      refreshTokenStore.delete(refreshToken);
+      const err = new Error('Usuario no encontrado');
+      (err as any).statusCode = 401;
+      throw err;
+    }
+
+    const token = jwt.sign(buildPayload(user), getJwtSecret(), {
+      expiresIn: AUTH_CONSTANTS.TOKEN_EXPIRY,
     });
+    return { token };
+  },
 
-    logger.info(`Email verificado: ${user.email}`);
-    return { ...user, email_verified: true, verification_token: null };
-  }
+  // ── Logout ─────────────────────────────────────────────────
+  async logout(refreshToken: string): Promise<void> {
+    refreshTokenStore.delete(refreshToken);
+  },
 
-  async forgotPassword(email: string): Promise<string> {
-    const user = await UserModel.findByEmail(email.toLowerCase());
-    if (!user) throw new Error('Email no encontrado');
+  // ── Cambio de contraseña ───────────────────────────────────
+  async changePassword(userId: number, dto: ChangePasswordDto): Promise<void> {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      const err = new Error('Usuario no encontrado');
+      (err as any).statusCode = 404;
+      throw err;
+    }
 
-    const resetToken = this.generateResetToken();
+    const match = await UserModel.comparePassword(dto.passwordActual, user.password);
+    if (!match) {
+      const err = new Error('La contraseña actual es incorrecta');
+      (err as any).statusCode = 400;
+      throw err;
+    }
 
-    await UserModel.update(user.id, {
-      reset_token: resetToken,
-      reset_token_expiry: new Date(Date.now() + 60 * 60 * 1000), // 1 hora
-    });
+    if (dto.passwordNuevo.length < AUTH_CONSTANTS.PASSWORD_MIN_LENGTH) {
+      const err = new Error(
+        `La nueva contraseña debe tener al menos ${AUTH_CONSTANTS.PASSWORD_MIN_LENGTH} caracteres`,
+      );
+      (err as any).statusCode = 400;
+      throw err;
+    }
 
-    logger.info(`Reset token generado para: ${user.email}`);
-    return resetToken;
-  }
+    // Hashear manualmente porque UserModel.update recibe campos directos
+    const passwordHash = await bcrypt.hash(dto.passwordNuevo, AUTH_CONSTANTS.BCRYPT_ROUNDS);
+    await UserModel.update(userId, { password: passwordHash });
+    logger.info(`Contraseña actualizada: userId=${userId}`);
+  },
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const user = await UserModel.findByResetToken(token);
-    if (!user) throw new Error('Token inválido o expirado');
+  // ── Perfil ─────────────────────────────────────────────────
+  async getProfile(userId: number): Promise<PublicUser> {
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      const err = new Error('Usuario no encontrado');
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    return toPublicUser(user);
+  },
 
-    const salt = await import('bcryptjs').then(b => b.genSalt(12));
-    const hashed = await import('bcryptjs').then(b => b.hash(newPassword, salt));
+  async updateProfile(
+    userId: number,
+    data: Partial<Pick<RegisterDto, 'nombre' | 'apellido' | 'especialidad' | 'institucion' | 'telefono'>>,
+  ): Promise<PublicUser> {
+    await UserModel.update(userId, data as any);
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      const err = new Error('Usuario no encontrado');
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    return toPublicUser(user);
+  },
 
-    await UserModel.update(user.id, {
-      password: hashed,
-      reset_token: null,
-      reset_token_expiry: null,
-    });
-
-    logger.info(`Contraseña restablecida para: ${user.email}`);
-  }
-
-  async refreshTokens(refreshToken: string): Promise<AuthTokens> {
-    const payload = this.verifyRefreshToken(refreshToken);
-    const user = await UserModel.findById(Number(payload.userId));
-    if (!user) throw new Error('Usuario no encontrado');
-
-    return this.generateTokens(user);
-  }
-}
-
-export const authService = new AuthService();
-export { AuthService };
+  // ── Solo para tests ────────────────────────────────────────
+  _clearRefreshTokens(): void {
+    refreshTokenStore.clear();
+  },
+};

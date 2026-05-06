@@ -1,92 +1,87 @@
+// ============================================================
+// CLARA — Auth Routes (completo con reset password)
+// ============================================================
+
 import { Router } from 'express';
 import {
-  register,
+  changePassword,
+  getMe,
   login,
+  logout,
+  refreshToken,
+  register,
+  updateMe,
+} from '../controllers/auth.controller';
+import {
   verifyEmail,
+  resendVerification,
+} from '../controllers/email.verification.controller';
+import {
   forgotPassword,
   resetPassword,
-  refreshToken,
-  getProfile,
-} from '../controllers/auth.controller';
-import { authenticate } from '../middlewares/auth.middleware';
+} from '../controllers/reset.password.controller';
+import { authenticate } from '../middlewares/jwt.middleware';
+import {
+  validateChangePassword,
+  validateLogin,
+  validateRegister,
+} from '../middlewares/auth.validation.middleware';
 
 const router = Router();
 
-/**
- * @openapi
- * /auth/register:
- *   post:
- *     summary: Registrar nuevo usuario
- *     tags: [Autenticación]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [nombre, apellido, email, password]
- *             properties:
- *               nombre:   { type: string }
- *               apellido: { type: string }
- *               email:    { type: string, format: email }
- *               password: { type: string, minLength: 8 }
- *     responses:
- *       201:
- *         description: Cuenta creada exitosamente
- *       409:
- *         description: Email ya registrado
- */
-router.post('/register', register);
+// ── Públicas ─────────────────────────────────────────────────
 
 /**
  * @openapi
- * /auth/login:
+ * /api/v1/auth/register:
  *   post:
- *     summary: Iniciar sesión
- *     tags: [Autenticación]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [email, password]
- *             properties:
- *               email:    { type: string }
- *               password: { type: string }
- *     responses:
- *       200:
- *         description: Login exitoso con tokens JWT
- *       401:
- *         description: Credenciales inválidas
+ *     tags: [Auth]
+ *     summary: Registrar nuevo usuario (envía email de verificación)
  */
-router.post('/login', login);
+router.post('/register', validateRegister, register);
 
 /**
  * @openapi
- * /auth/verify-email/{token}:
+ * /api/v1/auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Iniciar sesión (requiere email verificado)
+ */
+router.post('/login',    validateLogin,    login);
+
+router.post('/refresh',  refreshToken);
+router.post('/logout',   logout);
+
+/**
+ * @openapi
+ * /api/v1/auth/verify-email:
  *   get:
- *     summary: Verificar email
- *     tags: [Autenticación]
+ *     tags: [Auth]
+ *     summary: Verificar email con token recibido por correo
  *     parameters:
- *       - in: path
+ *       - in: query
  *         name: token
  *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Email verificado
- *       400:
- *         description: Token inválido
+ *         schema:
+ *           type: string
  */
-router.get('/verify-email/:token', verifyEmail);
+router.get('/verify-email', verifyEmail);
 
 /**
  * @openapi
- * /auth/forgot-password:
+ * /api/v1/auth/resend-verification:
  *   post:
- *     summary: Solicitar reset de contraseña
- *     tags: [Autenticación]
+ *     tags: [Auth]
+ *     summary: Reenviar correo de verificación
+ */
+router.post('/resend-verification', resendVerification);
+
+/**
+ * @openapi
+ * /api/v1/auth/forgot-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Solicitar enlace de recuperación de contraseña
  *     requestBody:
  *       required: true
  *       content:
@@ -95,71 +90,40 @@ router.get('/verify-email/:token', verifyEmail);
  *             type: object
  *             required: [email]
  *             properties:
- *               email: { type: string }
- *     responses:
- *       200:
- *         description: Instrucciones enviadas
- *       404:
- *         description: Email no encontrado
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: medico@hospital.com
  */
 router.post('/forgot-password', forgotPassword);
 
 /**
  * @openapi
- * /auth/reset-password/{token}:
+ * /api/v1/auth/reset-password:
  *   post:
- *     summary: Restablecer contraseña
- *     tags: [Autenticación]
- *     parameters:
- *       - in: path
- *         name: token
- *         required: true
- *         schema: { type: string }
+ *     tags: [Auth]
+ *     summary: Restablecer contraseña con token del email
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [newPassword]
+ *             required: [token, password]
  *             properties:
- *               newPassword: { type: string, minLength: 8 }
- *     responses:
- *       200:
- *         description: Contraseña restablecida
- *       400:
- *         description: Token inválido o expirado
+ *               token:
+ *                 type: string
+ *                 description: Token recibido por email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 description: Nueva contraseña
  */
-router.post('/reset-password/:token', resetPassword);
+router.post('/reset-password', resetPassword);
 
-/**
- * @openapi
- * /auth/refresh-token:
- *   post:
- *     summary: Renovar access token
- *     tags: [Autenticación]
- *     responses:
- *       200:
- *         description: Nuevos tokens generados
- *       401:
- *         description: Refresh token inválido
- */
-router.post('/refresh-token', refreshToken);
-
-/**
- * @openapi
- * /auth/profile:
- *   get:
- *     summary: Obtener perfil del usuario autenticado
- *     tags: [Autenticación]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Perfil del usuario
- *       401:
- *         description: No autenticado
- */
-router.get('/profile', authenticate, getProfile);
+// ── Protegidas ───────────────────────────────────────────────
+router.get   ('/me',          authenticate,                         getMe);
+router.patch ('/me',          authenticate,                         updateMe);
+router.patch ('/me/password', authenticate, validateChangePassword, changePassword);
 
 export default router;
