@@ -1,4 +1,4 @@
-/* ══════════════════════════════════════════════════════
+/* 
    CLARA – API Client
    Toda la comunicación con el backend va por aquí.
 
@@ -13,7 +13,7 @@
      GET  /api/v1/history/stats    → estadísticas
      GET  /api/v1/history/:id      → análisis por ID
      DELETE /api/v1/history/:id    → eliminar entrada
-   ══════════════════════════════════════════════════════ */
+   */
 
 const BACKEND_URL = 'http://localhost:3000';
 const API_BASE    = `${BACKEND_URL}/api/v1`;

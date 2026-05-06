@@ -1,44 +1,57 @@
-/* ══════════════════════════════════════
-   CLARA – Auth Screens
-   ══════════════════════════════════════ */
+/* CLARA – Auth Screens*/
 
 .auth-wrap {
+  background: var(--auth-bg);
   display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
-  background: var(--beige);
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+}
+
+/* Tarjeta centrada */
+.auth-card {
+  display: flex;
+  width: 1100px;
+  min-height: 660px;
+  background: var(--auth-card-bg);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 /* Panel izquierdo - marca */
 .auth-brand {
-  width: 320px;
-  background: var(--charcoal);
+  width: 380px;
+  background: var(--auth-brand-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem;
   flex-shrink: 0;
+  border-radius: 14px;
+  margin: 8px;
 }
 
 .logo-big {
   font-family: var(--font-display);
-  font-size: 52px;
-  color: var(--white);
+  font-size: 74px;
+  color: var(--auth-logo-color);
   letter-spacing: -1px;
   line-height: 1;
 }
 
 .logo-dot {
-  color: var(--accent);
+  color: var(--auth-logo-color);
 }
 
 .tagline {
-  font-size: 11px;
-  color: var(--gray-muted);
-  text-align: center;
-  margin-top: 12px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  display: none;
 }
 
 /* Panel derecho - contenido */
@@ -48,15 +61,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
+  padding: 2.5rem 2rem;
   position: relative;
+  background: var(--auth-card-bg);
 }
 
 .auth-top-link {
   position: absolute;
-  top: 2rem;
-  right: 2.5rem;
-  font-size: 13px;
+  top: 1.5rem;
+  right: 2rem;
+  font-size: 15px;
   color: var(--gray-text);
   cursor: pointer;
   background: none;
@@ -73,7 +87,7 @@
 /* Formulario */
 .auth-form {
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
 }
 
 .auth-form--centered {
@@ -81,6 +95,7 @@
 }
 
 .auth-form h2 {
+  display: block;
   font-family: var(--font-display);
   font-size: 28px;
   font-weight: 400;
@@ -89,19 +104,20 @@
 }
 
 .auth-form .subtitle {
+  display: block;
   font-size: 13px;
   color: var(--gray-text);
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 15px;
 }
 
 .form-group {
-  margin-bottom: 14px;
+  margin-bottom: 15px;
 }
 
 .form-group label {
@@ -115,35 +131,36 @@
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 9px 12px;
-  border: 1px solid var(--beige-border);
+  padding: 16px 18px;
+  border: none;
   border-radius: var(--radius-sm);
-  background: var(--white);
+  background: var(--auth-input-bg);
   font-family: var(--font-main);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--charcoal);
   outline: none;
-  transition: border-color 0.2s;
+  transition: box-shadow 0.2s;
+  box-shadow: var(--shadow-card);
 }
 
 .form-group input::placeholder {
-  color: var(--gray-muted);
+  color: var(--auth-input-placeholder);
 }
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .auth-link {
   text-align: center;
-  margin-top: 16px;
+  margin-top: 14px;
   font-size: 12px;
   color: var(--gray-text);
 }
 
 .auth-link span {
-  color: var(--accent);
+  color: var(--gray-text);
   cursor: pointer;
 }
 
@@ -162,4 +179,41 @@
   justify-content: center;
   margin: 0 auto 1rem;
   font-size: 22px;
+}
+
+/* Recovery — tarjeta más ancha */
+#screen-recovery .auth-card {
+  width: 1100px;
+}
+/*Registro — tarjeta más ancha*/
+#screen-register .auth-card{
+  width: 1100px;
+}
+
+#screen-register .auth-form {
+  max-width: 560px;
+}
+
+#screen-register .form-group input,
+#screen-register .form-group select {
+  padding: 15px 16px;
+  font-size: 15px;
+}
+
+#screen-register .form-row {
+  gap: 20px;
+}
+
+#screen-register .form-group {
+  margin-bottom: 18px;
+}
+
+#screen-register .auth-form h2 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+#screen-register .auth-form .subtitle {
+  font-size: 14px;
+  margin-bottom: 1.8rem;
 }

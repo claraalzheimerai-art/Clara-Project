@@ -21,13 +21,19 @@ function showScreen(id) {
  * En producción: llamar a POST /api/auth/login con fetch()
  */
 function loginSuccess() {
-  const email = document.getElementById('login-email')?.value;
-  const pass  = document.getElementById('login-pass')?.value;
+  const email = document.getElementById('login-email');
+  const pass  = document.getElementById('login-pass');
 
-  /* Validación básica (reemplazar con llamada real a FastAPI) */
-  if (!email || !pass) {
-    showToast('Completa todos los campos');
-    return;
+  if (!email?.value.trim()) {
+    showToast('Ingresa tu correo electrónico'); return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.value)) {
+      showToast('Ingresa un correo válido'); return;
+}
+  if (!pass?.value.trim()) {
+    showToast('Ingresa tu contraseña'); return;
   }
 
   /* Ocultar pantallas de auth y mostrar app */
@@ -47,6 +53,42 @@ function loginSuccess() {
  * En producción: llamar a POST /api/auth/register
  */
 function registerSuccess() {
+  const nombre    = document.querySelector('#screen-register input[type="text"]');
+  const apellido  = document.querySelectorAll('#screen-register input[type="text"]')[1];
+  const telefono  = document.querySelectorAll('#screen-register input[type="text"]')[2];
+  const correo    = document.querySelector('#screen-register input[type="email"]');
+  const password  = document.querySelector('#screen-register input[type="password"]');
+  const confirmar = document.querySelectorAll('#screen-register input[type="password"]')[1];
+  const especialidad = document.querySelector('#screen-register select');
+
+  if (!nombre?.value.trim()) {
+    showToast('El nombre es obligatorio'); return;
+  }
+  if (!apellido?.value.trim()) {
+    showToast('El apellido es obligatorio'); return;
+  }
+  if (!telefono?.value.trim()) {
+    showToast('El teléfono es obligatorio'); return;
+  }
+  if (!especialidad?.value) {
+    showToast('Selecciona una especialidad'); return;
+  }
+  if (!correo?.value.trim()) {
+    showToast('El correo es obligatorio'); return;
+  }
+  if (!password?.value.trim()) {
+    showToast('La contraseña es obligatoria'); return;
+  }
+  if (password.value.length < 8) {
+    showToast('La contraseña debe tener mínimo 8 caracteres'); return;
+  }
+  if (!confirmar?.value.trim()) {
+    showToast('Confirma tu contraseña'); return;
+  }
+  if (password.value !== confirmar.value) {
+    showToast('Las contraseñas no coinciden'); return;
+  }
+  
   openModal('modal-register');
 }
 
@@ -55,6 +97,18 @@ function registerSuccess() {
  * En producción: llamar a POST /api/auth/recovery
  */
 function recoverySuccess() {
+
+  const correo = document.querySelector('#screen-recovery input[type="email"]');
+
+  if (!correo?.value.trim()) {
+    showToast('Ingresa tu correo electrónico'); return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(correo.value)) {
+    showToast('Ingresa un correo válido'); return;
+  }
+  
   openModal('modal-recovery');
 }
 

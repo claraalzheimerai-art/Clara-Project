@@ -16,6 +16,15 @@
   --accent-dark:    #A67A52;
   --accent-light:   #EDD9C3;
 
+  /* Auth */
+  --auth-bg:            #F0E6D8;      /* fondo exterior */
+  --auth-card-bg:       #E8E0D8;      /* fondo de la tarjeta */
+  --auth-brand-bg:      #1A1A18;      /* panel negro izquierdo */
+  --auth-input-bg:      #F5F0EB;      /* fondo de los inputs */
+  --auth-input-placeholder: #B0A99F;  /* color placeholder */
+  --auth-logo-color:    #EDD9C3;      /* color del logo en el panel */
+
+
   /* Semánticos */
   --success-bg:     #E6F4EA;
   --success-text:   #2E7D32;
@@ -35,6 +44,7 @@
   --radius:         10px;
   --radius-sm:      6px;
   --shadow:         0 1px 3px rgba(0, 0, 0, 0.08);
+  
 }
 
 *, *::before, *::after {

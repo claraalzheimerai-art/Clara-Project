@@ -1,13 +1,11 @@
-/* ══════════════════════════════════════════════════════
-   CLARA – Análisis Module (integrado con backend real)
+/* 
+   CLARA – Análisis Module
 
    Patrón Observer: Socket.IO emite eventos de progreso
-   desde el backend → el frontend reacciona en tiempo real.
+   desde el backend → el frontend reacciona en tiempo real
 
    Patrón Strategy: el usuario elige el modelo en la UI
-   (actualmente el backend usa ResNet50 fijo; cuando el
-   AI service soporte VGG16, se pasa como query param).
-   ══════════════════════════════════════════════════════ */
+    */
 
 let _selectedFile = null;
 let _lastResult   = null;
@@ -156,6 +154,9 @@ function _mostrarResultados(result) {
   if (result.requiresReview) {
     showToast('⚠ Confianza baja — se recomienda revisión médica', 4000);
   }
+  
+  document.getElementById('resultados-vacio').style.display    = 'none';
+  document.getElementById('resultados-contenido').style.display = 'block';
 
   navigate(
     document.querySelector('[data-page="page-resultados"]'),
