@@ -25,22 +25,26 @@ class GradCAMService:
         try:
             cam_extractor = GradCAM(self.model, target_layer=self.target_layer)
 
-            # Forward pass con gradientes activos
             self.model.eval()
-            output = self.model(tensor)
 
-            if class_idx is None:
-                class_idx = output.squeeze().argmax().item()
+            # Grad-CAM requiere backprop: activar gradientes explícitamente
+            tensor = tensor.requires_grad_(True)
 
-            # Extraer mapa de activación
-            activation_map = cam_extractor(class_idx, output)
+            with torch.enable_grad():
+                output = self.model(tensor)
+
+                if class_idx is None:
+                    class_idx = output.squeeze().argmax().item()
+
+                # Extraer mapa de activación
+                activation_map = cam_extractor(class_idx, output)
             cam_map = activation_map[0].squeeze()
 
             # Superponer sobre imagen original
-            original = tensor.squeeze().permute(1, 2, 0).numpy()
+            original = tensor.squeeze().permute(1, 2, 0).detach().numpy()
             original = (original - original.min()) / (original.max() - original.min())
 
-            pil_original = to_pil_image(tensor.squeeze())
+            pil_original = to_pil_image(tensor.squeeze().detach())
             overlay = overlay_mask(
                 pil_original,
                 to_pil_image(cam_map, mode="F"),
