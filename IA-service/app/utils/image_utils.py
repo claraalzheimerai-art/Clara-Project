@@ -134,3 +134,11 @@ def preprocess_image(image: np.ndarray) -> torch.Tensor:
 def tensor_to_base64(image: np.ndarray) -> str:
     _, buffer = cv2.imencode(".png", image)
     return f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
+
+
+def tensor_to_original_png(tensor: torch.Tensor) -> str:
+    """Convierte un tensor preprocesado al slice MRI original como PNG base64."""
+    original = tensor.squeeze().permute(1, 2, 0).numpy()
+    original = (original - original.min()) / (original.max() - original.min() + 1e-8)
+    original_bgr = cv2.cvtColor(np.uint8(255 * original), cv2.COLOR_RGB2BGR)
+    return tensor_to_base64(original_bgr)

@@ -14,6 +14,7 @@ from app.utils.image_utils import (
     load_mri_image,
     preprocess_image,
     tensor_to_base64,
+    tensor_to_original_png,
 )
 from app.core.config import settings
 from app.core.logger import logger
@@ -94,12 +95,14 @@ async def predict(files: list[UploadFile]):
             if best is None or prediction["confidence"] > best["prediction"]["confidence"]:
                 best = {"filename": file.filename, "tensor": tensor, "prediction": prediction}
 
-        heatmap = gradcam_service.generate(best["tensor"])
+        heatmap   = gradcam_service.generate(best["tensor"])
+        mri_image = tensor_to_original_png(best["tensor"])
 
         return JSONResponse(content={
             "best_filename": best["filename"],
-            "prediction": best["prediction"],
-            "gradcam": tensor_to_base64(heatmap),
+            "prediction":    best["prediction"],
+            "gradcam":       tensor_to_base64(heatmap),
+            "mri_image":     mri_image,
             "all_predictions": all_predictions,
             "model_version": settings.MODEL_VERSION,
         })
