@@ -59,21 +59,21 @@
         <div class="form-row">
           <div class="form-group">
             <label>Nombre</label>
-            <input type="text" placeholder="Nombre">
+            <input type="text" id="reg-nombre" placeholder="Nombre">
           </div>
           <div class="form-group">
             <label>Apellido</label>
-            <input type="text" placeholder="Apellido">
+            <input type="text" id="reg-apellido" placeholder="Apellido">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Teléfono</label>
-            <input type="text" placeholder="+57">
+            <input type="text" id="reg-telefono" placeholder="+57">
           </div>
           <div class="form-group">
             <label>Especialidad</label>
-            <select>
+            <select id="reg-especialidad">
               <option value="">Seleccione una opción</option>
               <option>Neurología</option>
               <option>Radiología</option>
@@ -83,21 +83,21 @@
         <div class="form-row">
           <div class="form-group">
             <label>Correo electrónico</label>
-            <input type="email" placeholder="correo@">
+            <input type="email" id="reg-email" placeholder="correo@">
           </div>
           <div class="form-group">
             <label>Fecha de nacimiento</label>
-            <input type="date">
+            <input type="date" id="reg-fecha">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" placeholder="Contraseña">
+            <input type="password" id="reg-password" placeholder="Contraseña">
           </div>
           <div class="form-group">
             <label>Confirmar contraseña</label>
-            <input type="password" placeholder="Confirmar">
+            <input type="password" id="reg-confirm" placeholder="Confirmar">
           </div>
         </div>
         <button class="btn-primary" onclick="registerSuccess()">Crear cuenta</button>
@@ -138,9 +138,9 @@
   <div class="modal-overlay" id="modal-register">
     <div class="modal-box">
       <div class="modal-icon">✓</div>
-      <h3>¡Éxito!</h3>
-      <p>Cuenta creada y verificada con éxito.<br>Ahora puedes iniciar sesión.</p>
-      <button class="btn-secondary" onclick="closeModal('modal-register'); showScreen('screen-login')">Continuar</button>
+      <h3>¡Cuenta creada!</h3>
+      <p>Te enviamos un correo de verificación.<br>Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.</p>
+      <button class="btn-secondary" onclick="closeModal('modal-register'); showScreen('screen-login')">Ir al inicio de sesión</button>
     </div>
   </div>
 

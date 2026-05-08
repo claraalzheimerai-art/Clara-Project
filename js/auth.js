@@ -1,133 +1,163 @@
-/* ══════════════════════════════════════
-   CLARA – Auth Module (MVC Controller)
-   Patrón: MVC – maneja eventos de auth
-   y decide qué vista mostrar
-   ══════════════════════════════════════ */
+/*
+  CLARA – Auth Module
+  Conecta los formularios de la UI con los endpoints reales del backend.
 
-/**
- * Muestra una pantalla de autenticación y oculta las demás.
- * @param {string} id - ID del elemento a mostrar
- */
+  Endpoints usados:
+    POST /api/v1/auth/login           → loginSuccess()
+    POST /api/v1/auth/register        → registerSuccess()
+    POST /api/v1/auth/forgot-password → recoverySuccess()
+    POST /api/v1/auth/logout          → logout()
+    GET  /api/v1/auth/me              → checkSession() (al cargar la página)
+*/
+
+// ── Navegación entre pantallas de auth ───────────────────────────────────────
+
 function showScreen(id) {
-  const screens = document.querySelectorAll('.auth-wrap');
-  screens.forEach(el => el.classList.add('hidden'));
-
+  document.querySelectorAll('.auth-wrap')
+    .forEach(el => el.classList.add('hidden'));
   const target = document.getElementById(id);
   if (target) target.classList.remove('hidden');
 }
 
-/**
- * Simula el login exitoso y muestra la app.
- * En producción: llamar a POST /api/auth/login con fetch()
- */
-function loginSuccess() {
-  const email = document.getElementById('login-email');
-  const pass  = document.getElementById('login-pass');
+// ── Helpers de UI ─────────────────────────────────────────────────────────────
 
-  if (!email?.value.trim()) {
-    showToast('Ingresa tu correo electrónico'); return;
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.value)) {
-      showToast('Ingresa un correo válido'); return;
+function _setLoading(btn, loading) {
+  btn.disabled   = loading;
+  btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
+  btn.textContent = loading ? 'Cargando...' : btn.dataset.originalText;
 }
-  if (!pass?.value.trim()) {
-    showToast('Ingresa tu contraseña'); return;
-  }
 
-  /* Ocultar pantallas de auth y mostrar app */
+function _showApp(user) {
   document.querySelectorAll('.auth-wrap').forEach(el => el.classList.add('hidden'));
-  const app = document.getElementById('app');
-  app.classList.remove('hidden');
-
-  /* Iniciar Socket.IO */
+  document.getElementById('app').classList.remove('hidden');
   initSocket();
-
-  /* Navegar a dashboard */
   navigate(document.querySelector('[data-page="page-dashboard"]'), 'page-dashboard');
+
+  // Mostrar nombre en sidebar si hay elemento para ello
+  const sidebarUser = document.getElementById('sidebar-user');
+  if (sidebarUser && user) sidebarUser.textContent = `${user.nombre} ${user.apellido}`;
 }
 
-/**
- * Simula registro y muestra modal de confirmación.
- * En producción: llamar a POST /api/auth/register
- */
-function registerSuccess() {
-  const nombre    = document.querySelector('#screen-register input[type="text"]');
-  const apellido  = document.querySelectorAll('#screen-register input[type="text"]')[1];
-  const telefono  = document.querySelectorAll('#screen-register input[type="text"]')[2];
-  const correo    = document.querySelector('#screen-register input[type="email"]');
-  const password  = document.querySelector('#screen-register input[type="password"]');
-  const confirmar = document.querySelectorAll('#screen-register input[type="password"]')[1];
-  const especialidad = document.querySelector('#screen-register select');
+// ── Login ─────────────────────────────────────────────────────────────────────
 
-  if (!nombre?.value.trim()) {
-    showToast('El nombre es obligatorio'); return;
+async function loginSuccess() {
+  const emailEl = document.getElementById('login-email');
+  const passEl  = document.getElementById('login-pass');
+  const btn     = document.querySelector('#screen-login .btn-primary');
+
+  const email    = emailEl?.value.trim();
+  const password = passEl?.value.trim();
+
+  if (!email) { showToast('Ingresa tu correo electrónico'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Ingresa un correo válido'); return; }
+  if (!password) { showToast('Ingresa tu contraseña'); return; }
+
+  _setLoading(btn, true);
+  try {
+    const { user } = await ClaraAPI.auth.login(email, password);
+    _showApp(user);
+  } catch (err) {
+    const msg = err.message || 'Error al iniciar sesión';
+    if (msg.includes('verificar')) {
+      showToast('Debes verificar tu correo antes de iniciar sesión', 4000);
+    } else {
+      showToast(msg);
+    }
+  } finally {
+    _setLoading(btn, false);
   }
-  if (!apellido?.value.trim()) {
-    showToast('El apellido es obligatorio'); return;
-  }
-  if (!telefono?.value.trim()) {
-    showToast('El teléfono es obligatorio'); return;
-  }
-  if (!especialidad?.value) {
-    showToast('Selecciona una especialidad'); return;
-  }
-  if (!correo?.value.trim()) {
-    showToast('El correo es obligatorio'); return;
-  }
-  if (!password?.value.trim()) {
-    showToast('La contraseña es obligatoria'); return;
-  }
-  if (password.value.length < 8) {
-    showToast('La contraseña debe tener mínimo 8 caracteres'); return;
-  }
-  if (!confirmar?.value.trim()) {
-    showToast('Confirma tu contraseña'); return;
-  }
-  if (password.value !== confirmar.value) {
-    showToast('Las contraseñas no coinciden'); return;
-  }
-  
-  openModal('modal-register');
 }
 
-/**
- * Simula envío de correo de recuperación.
- * En producción: llamar a POST /api/auth/recovery
- */
-function recoverySuccess() {
+// ── Registro ──────────────────────────────────────────────────────────────────
 
-  const correo = document.querySelector('#screen-recovery input[type="email"]');
+async function registerSuccess() {
+  const nombre      = document.getElementById('reg-nombre')?.value.trim();
+  const apellido    = document.getElementById('reg-apellido')?.value.trim();
+  const telefono    = document.getElementById('reg-telefono')?.value.trim();
+  const especialidad = document.getElementById('reg-especialidad')?.value;
+  const email       = document.getElementById('reg-email')?.value.trim();
+  const password    = document.getElementById('reg-password')?.value;
+  const confirmar   = document.getElementById('reg-confirm')?.value;
+  const btn         = document.querySelector('#screen-register .btn-primary');
 
-  if (!correo?.value.trim()) {
-    showToast('Ingresa tu correo electrónico'); return;
+  if (!nombre)       { showToast('El nombre es obligatorio');               return; }
+  if (!apellido)     { showToast('El apellido es obligatorio');             return; }
+  if (!telefono)     { showToast('El teléfono es obligatorio');             return; }
+  if (!especialidad) { showToast('Selecciona una especialidad');            return; }
+  if (!email)        { showToast('El correo es obligatorio');               return; }
+  if (!password)     { showToast('La contraseña es obligatoria');          return; }
+  if (password.length < 8) { showToast('La contraseña debe tener mínimo 8 caracteres'); return; }
+  if (password !== confirmar) { showToast('Las contraseñas no coinciden'); return; }
+
+  _setLoading(btn, true);
+  try {
+    await ClaraAPI.auth.register(nombre, apellido, email, password);
+    openModal('modal-register');
+  } catch (err) {
+    const msg = err.message || 'Error al crear cuenta';
+    if (msg.includes('registrado')) {
+      showToast('Este correo ya está registrado');
+    } else {
+      showToast(msg);
+    }
+  } finally {
+    _setLoading(btn, false);
   }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(correo.value)) {
-    showToast('Ingresa un correo válido'); return;
-  }
-  
-  openModal('modal-recovery');
 }
 
-/**
- * Cierra la sesión y vuelve al login.
- */
-function logout() {
+// ── Recuperación de contraseña ────────────────────────────────────────────────
+
+async function recoverySuccess() {
+  const correoEl = document.querySelector('#screen-recovery input[type="email"]');
+  const btn      = document.querySelector('#screen-recovery .btn-primary');
+  const email    = correoEl?.value.trim();
+
+  if (!email) { showToast('Ingresa tu correo electrónico'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Ingresa un correo válido'); return; }
+
+  _setLoading(btn, true);
+  try {
+    await ClaraAPI.auth.forgotPassword(email);
+    openModal('modal-recovery');
+  } catch (err) {
+    showToast(err.message || 'Error al enviar el correo');
+  } finally {
+    _setLoading(btn, false);
+  }
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+async function logout() {
+  try {
+    await ClaraAPI.auth.logout();
+  } catch (_) {
+    // si falla el logout en backend, limpiamos igual
+  }
+
   document.getElementById('app').classList.add('hidden');
   showScreen('screen-login');
   disconnectSocket();
 
-  /* Limpiar campos de login */
-  const emailInput = document.getElementById('login-email');
-  const passInput  = document.getElementById('login-pass');
-  if (emailInput) emailInput.value = '';
-  if (passInput)  passInput.value  = '';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value  = '';
 }
 
-/* ── Helpers de modales ── */
+// ── Verificar sesión activa al cargar la página ───────────────────────────────
+
+async function checkSession() {
+  if (!Session.isLoggedIn()) return;
+
+  try {
+    const json = await ClaraAPI.auth.getMe();
+    if (json?.data) _showApp(json.data);
+  } catch (_) {
+    Session.clearSession();
+  }
+}
+
+// ── Modales ───────────────────────────────────────────────────────────────────
+
 function openModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.classList.add('active');
@@ -137,3 +167,7 @@ function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.classList.remove('active');
 }
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', checkSession);

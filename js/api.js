@@ -1,156 +1,186 @@
-/* 
-   CLARA – API Client
-   Toda la comunicación con el backend va por aquí.
+/*
+  CLARA – API Client
+  Toda la comunicación con el backend va por aquí.
 
-   Backend (Node/Express):  http://localhost:3000
-   AI Service (FastAPI):    http://localhost:8000
-   Socket.IO:               http://localhost:3000
-
-   Endpoints reales:
-     POST /api/v1/analysis/upload  → subir imagen + analizar
-     GET  /api/v1/analysis/health  → estado del sistema
-     GET  /api/v1/history          → historial de análisis
-     GET  /api/v1/history/stats    → estadísticas
-     GET  /api/v1/history/:id      → análisis por ID
-     DELETE /api/v1/history/:id    → eliminar entrada
-   */
+  Backend (Node/Express):  http://localhost:3000
+  AI Service (FastAPI):    http://localhost:8000
+  Socket.IO:               http://localhost:3000
+*/
 
 const BACKEND_URL = 'http://localhost:3000';
 const API_BASE    = `${BACKEND_URL}/api/v1`;
 
-/* ── Patrón Facade: una sola interfaz para todos los servicios ── */
+// ── Gestión de sesión (localStorage) ────────────────────────────────────────
+
+const Session = {
+  setSession(token, refreshToken, user) {
+    localStorage.setItem('clara_token',   token);
+    localStorage.setItem('clara_refresh', refreshToken);
+    localStorage.setItem('clara_user',    JSON.stringify(user));
+  },
+  clearSession() {
+    localStorage.removeItem('clara_token');
+    localStorage.removeItem('clara_refresh');
+    localStorage.removeItem('clara_user');
+  },
+  getToken()    { return localStorage.getItem('clara_token'); },
+  getRefresh()  { return localStorage.getItem('clara_refresh'); },
+  getUser()     {
+    const u = localStorage.getItem('clara_user');
+    return u ? JSON.parse(u) : null;
+  },
+  isLoggedIn()  { return !!this.getToken(); },
+};
+
+// ── Helpers internos ─────────────────────────────────────────────────────────
+
+async function _postJSON(url, body) {
+  const res  = await fetch(url, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.message || json.error || `Error ${res.status}`);
+  return json;
+}
+
+async function _authFetch(url, options = {}) {
+  const token   = Session.getToken();
+  const headers = { ...(options.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res  = await fetch(url, { ...options, headers });
+  const json = await res.json().catch(() => ({}));
+
+  if (res.status === 401) {
+    Session.clearSession();
+    window.location.reload();
+    return;
+  }
+  if (!res.ok) throw new Error(json.message || json.error || `Error ${res.status}`);
+  return json;
+}
+
+// ── ClaraAPI ─────────────────────────────────────────────────────────────────
+
 const ClaraAPI = {
 
-  /* ─────────────────────────────────────────
-     ANÁLISIS: subir imagen MRI y obtener
-     diagnóstico + Grad-CAM del backend
-     ───────────────────────────────────────── */
+  // ── Autenticación ──────────────────────────────────────────────────────────
+
+  auth: {
+
+    async login(email, password) {
+      const json = await _postJSON(`${API_BASE}/auth/login`, { email, password });
+      Session.setSession(json.data.token, json.data.refreshToken, json.data.user);
+      return json.data;
+    },
+
+    async register(nombre, apellido, email, password) {
+      return await _postJSON(`${API_BASE}/auth/register`, { nombre, apellido, email, password });
+    },
+
+    async forgotPassword(email) {
+      return await _postJSON(`${API_BASE}/auth/forgot-password`, { email });
+    },
+
+    async logout() {
+      const refreshToken = Session.getRefresh();
+      if (refreshToken) {
+        await _postJSON(`${API_BASE}/auth/logout`, { refreshToken }).catch(() => {});
+      }
+      Session.clearSession();
+    },
+
+    async getMe() {
+      return await _authFetch(`${API_BASE}/auth/me`);
+    },
+  },
+
+  // ── Análisis ───────────────────────────────────────────────────────────────
+
   async uploadAndAnalyze(file) {
     const formData = new FormData();
-    formData.append('mriFile', file);   // ← campo que espera el backend
+    formData.append('mriFile', file);
+
+    const token   = Session.getToken();
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const response = await fetch(`${API_BASE}/analysis/upload`, {
       method: 'POST',
-      body: formData,
-      // NO poner Content-Type: el browser lo pone solo con el boundary correcto
+      headers,
+      body:   formData,
     });
 
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
       throw new Error(err.message || `Error ${response.status}`);
     }
-
     const json = await response.json();
-    return json.data; // EnrichedAnalysisResult
+    return json.data;
   },
 
-  /* ─────────────────────────────────────────
-     HEALTH: verificar que backend + AI estén
-     en línea antes de permitir análisis
-     ───────────────────────────────────────── */
   async health() {
     const response = await fetch(`${API_BASE}/analysis/health`);
     return await response.json();
   },
 
-  /* ─────────────────────────────────────────
-     HISTORIAL
-     ───────────────────────────────────────── */
+  // ── Historial ──────────────────────────────────────────────────────────────
+
   async getHistory(limit = 20, offset = 0) {
-    const response = await fetch(
-      `${API_BASE}/history?limit=${limit}&offset=${offset}`
-    );
-    if (!response.ok) throw new Error('Error cargando historial');
-    const json = await response.json();
+    const json = await _authFetch(`${API_BASE}/history?limit=${limit}&offset=${offset}`);
     return json.data;
   },
 
   async getHistoryStats() {
-    const response = await fetch(`${API_BASE}/history/stats`);
-    if (!response.ok) throw new Error('Error cargando estadísticas');
-    const json = await response.json();
+    const json = await _authFetch(`${API_BASE}/history/stats`);
     return json.data;
   },
 
   async getHistoryById(id) {
-    const response = await fetch(`${API_BASE}/history/${id}`);
-    if (!response.ok) throw new Error('Análisis no encontrado');
-    const json = await response.json();
+    const json = await _authFetch(`${API_BASE}/history/${id}`);
     return json.data;
   },
 
   async deleteHistoryEntry(id) {
-    const response = await fetch(`${API_BASE}/history/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) throw new Error('Error eliminando entrada');
-    return await response.json();
+    return await _authFetch(`${API_BASE}/history/${id}`, { method: 'DELETE' });
   },
 };
 
-/* ── Socket.IO – eventos en tiempo real (Observer) ──
-   El backend emite estos eventos durante el análisis:
-     analysis:started   → { analysisId, filename, startedAt }
-     analysis:progress  → { analysisId, stage, message, percent }
-     analysis:complete  → EnrichedAnalysisResult completo
-     analysis:error     → { analysisId, error, code }
-   ───────────────────────────────────────────────── */
+// ── Socket.IO ─────────────────────────────────────────────────────────────────
 
 let _socket = null;
 
-/**
- * Inicializa la conexión Socket.IO con el backend.
- * Llama esto una vez después del login.
- * Requiere tener socket.io.js cargado en el HTML.
- */
 function initSocket() {
   if (_socket) return _socket;
 
-  /* Requiere: <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script> */
   if (typeof io === 'undefined') {
-    console.warn('[Socket] socket.io no está cargado. Agrega el script al HTML.');
+    console.warn('[Socket] socket.io no está cargado.');
     return null;
   }
 
+  const token = Session.getToken();
   _socket = io(BACKEND_URL, {
-    transports: ['websocket', 'polling'],
-    reconnection: true,
+    transports:          ['websocket', 'polling'],
+    reconnection:        true,
     reconnectionAttempts: 5,
-    reconnectionDelay: 2000,
+    reconnectionDelay:   2000,
+    auth:                token ? { token } : {},
   });
 
-  _socket.on('connect', () => {
-    console.log('[Socket] Conectado al backend:', _socket.id);
-  });
-
-  _socket.on('service:status', (data) => {
-    console.log('[Socket] Estado del servicio:', data);
-  });
-
-  _socket.on('disconnect', (reason) => {
-    console.warn('[Socket] Desconectado:', reason);
-  });
-
-  _socket.on('connect_error', (err) => {
-    console.error('[Socket] Error de conexión:', err.message);
-  });
+  _socket.on('connect',        ()      => console.log('[Socket] Conectado:', _socket.id));
+  _socket.on('service:status', (data)  => console.log('[Socket] Estado servicio:', data));
+  _socket.on('disconnect',     (reason)=> console.warn('[Socket] Desconectado:', reason));
+  _socket.on('connect_error',  (err)   => console.error('[Socket] Error:', err.message));
 
   return _socket;
 }
 
-/**
- * Registra listeners para los eventos de un análisis específico.
- * @param {Object} callbacks
- * @param {Function} callbacks.onStarted   - (payload) cuando inicia
- * @param {Function} callbacks.onProgress  - (payload) { stage, message, percent }
- * @param {Function} callbacks.onComplete  - (result) EnrichedAnalysisResult
- * @param {Function} callbacks.onError     - (payload) { error, code }
- */
 function listenAnalisisEvents({ onStarted, onProgress, onComplete, onError }) {
   const socket = initSocket();
   if (!socket) return;
 
-  // Limpiar listeners anteriores para no acumularlos
   socket.off('analysis:started');
   socket.off('analysis:progress');
   socket.off('analysis:complete');
