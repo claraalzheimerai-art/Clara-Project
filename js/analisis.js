@@ -1,11 +1,8 @@
-/* 
+/*
    CLARA – Análisis Module
+   */
 
-   Patrón Observer: Socket.IO emite eventos de progreso
-   desde el backend → el frontend reacciona en tiempo real
-
-   Patrón Strategy: el usuario elige el modelo en la UI
-    */
+const LAST_RESULT_KEY = 'clara_last_result';
 
 let _selectedFile = null;
 let _lastResult   = null;
@@ -101,11 +98,26 @@ async function iniciarAnalisis() {
   }
 }
 
-/* ── Renderizar resultados ── */
+/* ── Mostrar resultados: poblar UI + navegar a la página ── */
 function _mostrarResultados(result) {
   document.getElementById('modal-progress').classList.remove('active');
   document.getElementById('prog-bar').style.width = '0%';
 
+  // Guardar en localStorage para sobrevivir recargas
+  try {
+    localStorage.setItem(LAST_RESULT_KEY, JSON.stringify(result));
+  } catch (e) { /* cuota excedida: base64 grande */ }
+
+  _poblarResultados(result);
+
+  navigate(
+    document.querySelector('[data-page="page-resultados"]'),
+    'page-resultados'
+  );
+}
+
+/* ── Poblar la UI sin navegar (restauración silenciosa) ── */
+function _poblarResultados(result) {
   const labelMap = {
     CN:  'Cognitivamente Normal',
     MCI: 'Deterioro Cognitivo Leve',
@@ -138,31 +150,48 @@ function _mostrarResultados(result) {
     });
   }
 
-  // Grad-CAM base64 del backend
-  if (result.gradcam) {
-    const gradcamImg = document.getElementById('gradcam-img');
-    if (gradcamImg) {
-      gradcamImg.src           = 'data:image/png;base64,' + result.gradcam;
-      gradcamImg.style.display = 'block';
-    }
-    document.querySelector('.gradcam-mock')?.classList.add('hidden');
+  // Imagen MRI original
+  const mriImg         = document.getElementById('mri-img');
+  const mriPlaceholder = document.getElementById('mri-placeholder');
+  if (result.mri_image && mriImg) {
+    mriImg.src           = 'data:image/png;base64,' + result.mri_image;
+    mriImg.style.display = 'block';
+    if (mriPlaceholder) mriPlaceholder.style.display = 'none';
+  }
+
+  // Mapa de calor Grad-CAM
+  const gradcamImg         = document.getElementById('gradcam-img');
+  const gradcamPlaceholder = document.getElementById('gradcam-placeholder');
+  if (result.gradcam && gradcamImg) {
+    gradcamImg.src           = 'data:image/png;base64,' + result.gradcam;
+    gradcamImg.style.display = 'block';
+    if (gradcamPlaceholder) gradcamPlaceholder.style.display = 'none';
   }
 
   const techModel = document.getElementById('tech-model');
   if (techModel) techModel.textContent = 'ResNet50 + Grad-CAM (v' + modelVer + ')';
 
+  document.getElementById('resultados-vacio').style.display     = 'none';
+  document.getElementById('resultados-contenido').style.display = 'block';
+
   if (result.requiresReview) {
     showToast('⚠ Confianza baja — se recomienda revisión médica', 4000);
   }
-  
-  document.getElementById('resultados-vacio').style.display    = 'none';
-  document.getElementById('resultados-contenido').style.display = 'block';
-
-  navigate(
-    document.querySelector('[data-page="page-resultados"]'),
-    'page-resultados'
-  );
 }
+
+/* ── Restaurar último resultado al cargar la página ── */
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const saved = localStorage.getItem(LAST_RESULT_KEY);
+    if (saved) {
+      const result = JSON.parse(saved);
+      _lastResult  = result;
+      _poblarResultados(result);   // llena la página sin navegar
+    }
+  } catch (e) {
+    localStorage.removeItem(LAST_RESULT_KEY);
+  }
+});
 
 /* ── Helper de progreso ── */
 function _setProgress(pct, mensaje) {
