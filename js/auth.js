@@ -32,10 +32,12 @@ function _showApp(user) {
   document.getElementById('app').classList.remove('hidden');
   initSocket();
   navigate(document.querySelector('[data-page="page-dashboard"]'), 'page-dashboard');
+  cargarPerfil();
 
   // Mostrar nombre en sidebar si hay elemento para ello
   const sidebarUser = document.getElementById('sidebar-user');
   if (sidebarUser && user) sidebarUser.textContent = `${user.nombre} ${user.apellido}`;
+  
 }
 
 // ── Login ─────────────────────────────────────────────────────────────────────
@@ -146,13 +148,30 @@ async function logout() {
 // ── Verificar sesión activa al cargar la página ───────────────────────────────
 
 async function checkSession() {
-  if (!Session.isLoggedIn()) return;
+  // Ocultar todo mientras se verifica
+  document.querySelectorAll('.auth-wrap').forEach(el => el.style.visibility = 'hidden');
+  document.getElementById('app').style.visibility = 'hidden';
+
+  if (!Session.isLoggedIn()) {
+    // No hay sesión — mostrar login
+    document.querySelectorAll('.auth-wrap').forEach(el => el.style.visibility = '');
+    document.getElementById('app').style.visibility = '';
+    return;
+  }
 
   try {
     const json = await ClaraAPI.auth.getMe();
-    if (json?.data) _showApp(json.data);
+    if (json?.data) {
+      _showApp(json.data);
+      cargarPerfil();
+    }
   } catch (_) {
     Session.clearSession();
+    showScreen('screen-login');
+  } finally {
+    // Mostrar todo al terminar
+    document.querySelectorAll('.auth-wrap').forEach(el => el.style.visibility = '');
+    document.getElementById('app').style.visibility = '';
   }
 }
 
@@ -166,6 +185,44 @@ function openModal(id) {
 function closeModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.classList.remove('active');
+}
+
+// ── Carga datos del perfil ──
+function cargarPerfil() {
+  const user = Session.getUser();
+  if (!user) return;
+
+  const nombre = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+
+  const elNombre      = document.getElementById('config-nombre');
+  const elEmail       = document.getElementById('config-email');
+  const elEspecialidad = document.getElementById('config-especialidad');
+  const elTelefono    = document.getElementById('config-telefono');
+
+  if (elNombre)       elNombre.value       = nombre;
+  if (elEmail)        elEmail.value        = user.email || '';
+  if (elEspecialidad) elEspecialidad.value = user.especialidad || '';
+  if (elTelefono)     elTelefono.value     = user.telefono || '';
+}
+
+async function guardarPerfil() {
+  const nombreCompleto = document.getElementById('config-nombre')?.value.trim() || '';
+  const especialidad   = document.getElementById('config-especialidad')?.value || '';
+  const telefono       = document.getElementById('config-telefono')?.value.trim() || '';
+
+  const partes   = nombreCompleto.split(' ');
+  const nombre   = partes[0] || '';
+  const apellido = partes.slice(1).join(' ') || '';
+
+  try {
+    const json = await ClaraAPI.auth.updateMe({ nombre, apellido, especialidad, telefono });
+    if (json?.data) {
+      Session.setSession(Session.getToken(), Session.getRefresh(), json.data);
+    }
+    showToast('Perfil guardado correctamente');
+  } catch (e) {
+    showToast('Error al guardar el perfil');
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────

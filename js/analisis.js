@@ -158,6 +158,11 @@ function _mostrarResultados(result) {
   document.getElementById('resultados-vacio').style.display    = 'none';
   document.getElementById('resultados-contenido').style.display = 'block';
 
+  // Limpiar zona de carga para el siguiente análisis
+  _selectedFile = null;
+  document.getElementById('file-loaded').classList.add('hidden');
+  document.getElementById('upload-zone').style.display = '';
+
   navigate(
     document.querySelector('[data-page="page-resultados"]'),
     'page-resultados'
