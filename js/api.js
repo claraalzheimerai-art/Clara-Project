@@ -103,7 +103,16 @@ const ClaraAPI = {
         body:    JSON.stringify(data),
       });
     },
+
+    async changePassword(currentPassword, newPassword) {
+      return await _authFetch(`${API_BASE}/auth/me/password`, {
+      method:  'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ passwordActual: currentPassword, 
+      passwordNuevo:  newPassword  }),
+    });
   },
+},
 
   // ── Análisis ───────────────────────────────────────────────────────────────
 

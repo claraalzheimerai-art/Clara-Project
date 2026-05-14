@@ -86,6 +86,15 @@ async function iniciarAnalisis() {
 
   try {
     _setProgress(5, 'Enviando imagen...');
+
+    // Mostrar preview de la imagen MRI desde el archivo local
+    const mriImg = document.getElementById('mri-img');
+    if (mriImg && _selectedFile) {
+      mriImg.src = URL.createObjectURL(_selectedFile);
+      mriImg.style.display = 'block';
+      document.querySelector('.mri-mock')?.classList.add('hidden');
+  }
+    
     const result = await ClaraAPI.uploadAndAnalyze(_selectedFile);
 
     // Fallback HTTP si Socket.IO no disparó onComplete
@@ -142,7 +151,7 @@ function _mostrarResultados(result) {
   if (result.gradcam) {
     const gradcamImg = document.getElementById('gradcam-img');
     if (gradcamImg) {
-      gradcamImg.src           = 'data:image/png;base64,' + result.gradcam;
+      gradcamImg.src = result.gradcam.startsWith('data:') ? result.gradcam : 'data:image/png;base64,' + result.gradcam;
       gradcamImg.style.display = 'block';
     }
     document.querySelector('.gradcam-mock')?.classList.add('hidden');
@@ -152,7 +161,7 @@ function _mostrarResultados(result) {
   if (techModel) techModel.textContent = 'ResNet50 + Grad-CAM (v' + modelVer + ')';
 
   if (result.requiresReview) {
-    showToast('⚠ Confianza baja — se recomienda revisión médica', 4000);
+    showToast('Confianza baja — se recomienda revisión médica', 4000);
   }
   
   document.getElementById('resultados-vacio').style.display    = 'none';

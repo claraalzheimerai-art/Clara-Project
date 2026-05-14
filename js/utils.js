@@ -38,3 +38,12 @@ function formatearFecha(fecha = new Date()) {
 function esValido(valor) {
   return valor !== null && valor !== undefined && valor.trim() !== '';
 }
+
+function togglePass(inputId, span) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+  span.textContent = isPassword ? 'Ocultar' : 'Ver';
+  input.focus();
+}

@@ -95,6 +95,15 @@ async function registerSuccess() {
   try {
     await ClaraAPI.auth.register(nombre, apellido, email, password);
     openModal('modal-register');
+
+    document.getElementById('reg-nombre').value      = '';
+    document.getElementById('reg-apellido').value    = '';
+    document.getElementById('reg-telefono').value    = '';
+    document.getElementById('reg-especialidad').value = '';
+    document.getElementById('reg-email').value       = '';
+    document.getElementById('reg-password').value    = '';
+    document.getElementById('reg-confirm').value     = '';
+
   } catch (err) {
     const msg = err.message || 'Error al crear cuenta';
     if (msg.includes('registrado')) {
@@ -222,6 +231,27 @@ async function guardarPerfil() {
     showToast('Perfil guardado correctamente');
   } catch (e) {
     showToast('Error al guardar el perfil');
+  }
+}
+
+async function actualizarPassword() {
+  const actual    = document.getElementById('config-pass-actual')?.value;
+  const nueva     = document.getElementById('config-pass-nueva')?.value;
+  const confirmar = document.getElementById('config-pass-confirmar')?.value;
+
+  if (!actual)          { showToast('Ingresa tu contraseña actual');           return; }
+  if (!nueva)           { showToast('Ingresa la nueva contraseña');            return; }
+  if (nueva.length < 8) { showToast('Mínimo 8 caracteres');                   return; }
+  if (nueva !== confirmar) { showToast('Las contraseñas no coinciden');        return; }
+
+  try {
+    await ClaraAPI.auth.changePassword(actual, nueva);
+    showToast('Contraseña actualizada correctamente');
+    document.getElementById('config-pass-actual').value    = '';
+    document.getElementById('config-pass-nueva').value     = '';
+    document.getElementById('config-pass-confirmar').value = '';
+  } catch (e) {
+    showToast(e.message || 'Error al actualizar la contraseña');
   }
 }
 
