@@ -4,14 +4,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import { ENV } from './env.config';
 
-const ALLOWED_EXTENSIONS = ['.nii', '.nii.gz', '.dcm'];
+const ALLOWED_EXTENSIONS = ['.nii', '.nii.gz', '.dcm', '.img', '.zip'];
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, ENV.UPLOAD.TEMP_DIR);
   },
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    // Preservar extensión compuesta (.nii.gz) correctamente
+    const name = file.originalname.toLowerCase();
+    const ext  = name.endsWith('.nii.gz') ? '.nii.gz'
+               : path.extname(name);
     cb(null, `${uuidv4()}${ext}`);
   },
 });
@@ -21,11 +24,11 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
-  const extOk = ALLOWED_EXTENSIONS.some((e) => file.originalname.endsWith(e));
+  const extOk = ALLOWED_EXTENSIONS.some((e) => file.originalname.toLowerCase().endsWith(e));
   if (extOk) {
     cb(null, true);
   } else {
-    cb(new Error(`Formato no permitido. Use .nii, .nii.gz o .dcm`));
+    cb(new Error(`Formato no permitido. Use .nii, .nii.gz, .dcm, .img o .zip (serie DICOM)`));
   }
 };
 

@@ -36,7 +36,8 @@ export const uploadAndAnalyze = async (
       result:   { ...result, analyzed_at: new Date().toISOString() },
     });
 
-    historyService.save(enriched);
+    const userId = req.user?.sub ?? null;
+    await historyService.save(enriched, userId);
 
     if (io) {
       emitToAll(io, SOCKET_EVENTS.ANALYSIS_COMPLETE, enriched);

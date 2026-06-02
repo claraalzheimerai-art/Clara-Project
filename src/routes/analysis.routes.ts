@@ -4,6 +4,7 @@ import { uploadAndAnalyze } from '../controllers/upload.controller';
 import { uploadMiddleware } from '../config/multer.config';
 import { validateUpload } from '../middlewares/validate.middleware';
 import { analysisLimiter } from '../middlewares/security.middleware';
+import { authenticate } from '../middlewares/jwt.middleware';
 
 const router = Router();
 /**
@@ -84,6 +85,7 @@ router.get('/health', healthCheck);
 router.post(
   '/upload',
   analysisLimiter,
+  authenticate,
   uploadMiddleware.single('mriFile'),
   validateUpload,
   uploadAndAnalyze,

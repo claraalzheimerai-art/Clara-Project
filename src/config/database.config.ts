@@ -1,38 +1,36 @@
-import mysql, { Pool } from 'mysql2/promise';
+import sql, { ConnectionPool } from 'mssql';
 import { logger } from '../utils/logger';
 
-let pool: Pool | null = null;
+let pool: ConnectionPool | null = null;
 
 export const connectDB = async (): Promise<void> => {
-  const uri = process.env.MySQL_URI;
+  const uri = process.env.SQLSERVER_URI;
 
   if (!uri) {
-    throw new Error('MySQL_URI no está definida en las variables de entorno');
+    throw new Error('SQLSERVER_URI no está definida en las variables de entorno');
   }
 
   try {
-    pool = mysql.createPool(uri);
-    const connection = await pool.getConnection();
-    const [rows] = await connection.query('SELECT 1');
-    connection.release();
-    logger.info('MySQL conectado correctamente');
+    pool = await sql.connect(uri);
+    await pool.request().query('SELECT 1');
+    logger.info('SQL Server conectado correctamente');
   } catch (error) {
-    logger.error('Error conectando a MySQL:', error);
+    logger.error('Error conectando a SQL Server:', error);
     throw error;
   }
 };
 
 export const disconnectDB = async (): Promise<void> => {
   if (pool) {
-    await pool.end();
+    await pool.close();
     pool = null;
-    logger.info('MySQL desconectado');
+    logger.info('SQL Server desconectado');
   }
 };
 
-export const getPool = (): Pool => {
+export const getPool = (): ConnectionPool => {
   if (!pool) {
-    throw new Error('No hay conexión activa a MySQL. Llama connectDB() primero.');
+    throw new Error('No hay conexión activa a SQL Server. Llama connectDB() primero.');
   }
   return pool;
 };

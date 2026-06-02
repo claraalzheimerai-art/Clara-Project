@@ -21,7 +21,8 @@ export interface Prediction {
 export interface AnalysisResult {
   filename:      string;
   prediction:    Prediction;
-  gradcam:       string; // base64 PNG
+  gradcam:       string; // base64 PNG — Grad-CAM overlay
+  mri_image:     string; // base64 PNG — slice MRI original
   model_version: string;
   analyzed_at:   string; // ISO timestamp
 }

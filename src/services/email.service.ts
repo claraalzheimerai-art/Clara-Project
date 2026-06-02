@@ -152,7 +152,7 @@ export const EmailService = {
 
   async sendVerificationEmail(dto: SendVerificationEmailDto): Promise<EmailResult> {
     const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-    const url     = `${baseUrl}/verify-email?token=${dto.token}`;
+    const url     = `${baseUrl}/verify-email.html?token=${dto.token}`;
 
     try {
       const transporter = createTransporter();
@@ -179,7 +179,7 @@ export const EmailService = {
 
   async sendResetPasswordEmail(dto: SendResetPasswordEmailDto): Promise<EmailResult> {
     const baseUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
-    const url     = `${baseUrl}/reset-password?token=${dto.token}`;
+    const url     = `${baseUrl}/reset-password.html?token=${dto.token}`;
 
     try {
       const transporter = createTransporter();

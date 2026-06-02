@@ -10,7 +10,7 @@ export const validateUpload = (
 
   if (!file) {
     res.status(400).json({
-      message: 'Archivo requerido. Suba una imagen MRI en formato .nii, .nii.gz o .dcm',
+      message: 'Archivo requerido. Suba una imagen MRI en formato .nii, .nii.gz, .dcm, .img o .zip (serie DICOM)',
     });
     return;
   }
