@@ -1,0 +1,49 @@
+# Entorno virtual
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Modelos entrenados (son muy pesados)
+*.pt
+*.pth
+*.onnx
+
+# Variables de entorno
+.env
+
+# Uploads temporales
+uploads/temp/*
+!uploads/temp/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Datos del dataset (pesados)
+app/data/raw/
+app/data/processed/
+app/data/splits/
