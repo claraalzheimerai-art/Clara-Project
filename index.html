@@ -240,10 +240,10 @@
               onclick="simulateUpload()"
               ondragover="event.preventDefault(); this.classList.add('drag')"
               ondragleave="this.classList.remove('drag')"
-              ondrop="event.preventDefault(); this.classList.remove('drag'); simulateUpload()">
+              ondrop="handleDrop(event)">
               <div class="upload-icon">↑</div>
-              <h4>Click para subir imagen</h4>
-              <p>NIfTI .nii / DICOM .dcm</p>
+              <h4>Click o arrastra el archivo aquí</h4>
+              <p>NIfTI (.nii / .nii.gz) · DICOM (.dcm) · Serie DICOM (.zip)</p>
             </div>
             <div class="file-loaded hidden" id="file-loaded">
               <div class="file-chip">
@@ -281,7 +281,9 @@
 
       <!-- RESULTADOS -->
 <div class="page" id="page-resultados">
-  <div id="resultados-vacio" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px;">
+
+  <!-- Estado vacío -->
+  <div id="resultados-vacio" style="display:none; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px;">
     <svg viewBox="0 0 24 24" fill="none" stroke="var(--gray-muted)" stroke-width="1.5" width="56" height="56">
       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
       <polyline points="14 2 14 8 20 8"/>
@@ -297,7 +299,32 @@
     </button>
   </div>
 
+  <!-- Lista de análisis -->
+  <div id="resultados-lista" style="display:none;">
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; gap:16px; flex-wrap:wrap;">
+      <div>
+        <h1 class="page-title">Historial de Análisis</h1>
+        <p class="page-sub">Selecciona un estudio para ver el resultado completo</p>
+      </div>
+      <button class="btn-cta" style="margin-top:8px;"
+              onclick="navigate(document.querySelector('[data-page=page-analisis]'), 'page-analisis')">
+        + Nuevo análisis
+      </button>
+    </div>
+    <div id="history-list-container">
+      <p style="color:var(--gray-muted); text-align:center; padding:40px 0;">Cargando historial...</p>
+    </div>
+  </div>
+
+  <!-- Detalle de un análisis -->
   <div id="resultados-contenido" style="display:none;">
+    <div style="margin-bottom:20px;">
+      <button onclick="volverALista()"
+              style="background:none; border:1px solid var(--border); border-radius:8px; padding:7px 16px;
+                     font-size:13px; color:var(--gray-muted); cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+        ← Volver al historial
+      </button>
+    </div>
     <h1 class="page-title">Detalles Completos del Análisis</h1>
     <p class="page-sub">Resumen del diagnóstico generado por IA</p>
 
