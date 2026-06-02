@@ -83,6 +83,15 @@ async function iniciarAnalisis() {
 
   try {
     _setProgress(5, 'Enviando imagen...');
+
+    // Mostrar preview de la imagen MRI desde el archivo local
+    const mriImg = document.getElementById('mri-img');
+    if (mriImg && _selectedFile) {
+      mriImg.src = URL.createObjectURL(_selectedFile);
+      mriImg.style.display = 'block';
+      document.querySelector('.mri-mock')?.classList.add('hidden');
+  }
+    
     const result = await ClaraAPI.uploadAndAnalyze(_selectedFile);
     if (!_lastResult) {
       _lastResult = result;
@@ -187,6 +196,16 @@ function _poblarResultados(result) {
     });
   }
 
+  // Grad-CAM base64 del backend
+  if (result.gradcam) {
+    const gradcamImg = document.getElementById('gradcam-img');
+    if (gradcamImg) {
+      gradcamImg.src           = 'data:image/png;base64,' + result.gradcam;
+      gradcamImg.style.display = 'block';
+    }
+    document.querySelector('.gradcam-mock')?.classList.add('hidden');
+  }
+
   const techModel = document.getElementById('tech-model');
   if (techModel) techModel.textContent = 'ResNet50 + Grad-CAM (v' + modelVer + ')';
 
@@ -209,66 +228,19 @@ function _poblarResultados(result) {
   }
 
   if (result.requiresReview) {
-    showToast('⚠ Confianza baja — se recomienda revisión médica', 4000);
+    showToast('Confianza baja — se recomienda revisión médica', 4000);
   }
+  
+  document.getElementById('resultados-vacio').style.display    = 'none';
+  document.getElementById('resultados-contenido').style.display = 'block';
+
+  navigate(
+    document.querySelector('[data-page="page-resultados"]'),
+    'page-resultados'
+  );
 }
 
-/* ── Helpers internos ── */
-
-function _mostrarVista(vistaId) {
-  ['resultados-vacio', 'resultados-lista', 'resultados-contenido'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (id === vistaId) {
-      el.style.display = id === 'resultados-vacio' ? 'flex' : 'block';
-    } else {
-      el.style.display = 'none';
-    }
-  });
-}
-
-function _resetImagenDetalle() {
-  const mriImg = document.getElementById('mri-img');
-  if (mriImg) { mriImg.src = ''; mriImg.style.display = 'none'; }
-  const mriPh  = document.getElementById('mri-placeholder');
-  if (mriPh)  mriPh.style.display = '';
-
-  const gcImg  = document.getElementById('gradcam-img');
-  if (gcImg)  { gcImg.src = ''; gcImg.style.display = 'none'; }
-  const gcPh   = document.getElementById('gradcam-placeholder');
-  if (gcPh)   gcPh.style.display = '';
-}
-
-function _htmlEntryCard(e) {
-  const badgeClass = { CN: 'r-badge--normal', MCI: 'r-badge--mild', AD: 'r-badge--moderate' }[e.label] ?? 'r-badge--normal';
-  const fecha = new Date(e.analyzedAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
-  const conf  = (e.confidence * 100).toFixed(1) + '%';
-  const review = e.requiresReview
-    ? '<span style="font-size:11px; color:#f59e0b; margin-left:8px;">⚠ Revisión recomendada</span>'
-    : '';
-
-  return `
-    <div onclick="verResultado('${e.analysisId}')"
-         style="background:var(--white); border:1px solid var(--border); border-radius:12px;
-                padding:16px 20px; display:flex; align-items:center; gap:16px;
-                margin-bottom:10px; cursor:pointer; transition:box-shadow .15s;"
-         onmouseenter="this.style.boxShadow='0 2px 12px rgba(0,0,0,.08)'"
-         onmouseleave="this.style.boxShadow='none'">
-      <div style="flex:1; min-width:0;">
-        <div style="font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          ${e.filename}${review}
-        </div>
-        <div style="font-size:12px; color:var(--gray-muted); margin-top:3px;">${fecha}</div>
-      </div>
-      <span class="r-badge ${badgeClass}" style="white-space:nowrap;">${e.diagnosticLabel}</span>
-      <div style="font-size:14px; font-weight:600; min-width:48px; text-align:right;">${conf}</div>
-      <button onclick="event.stopPropagation(); verResultado('${e.analysisId}')"
-              class="btn-cta" style="padding:6px 14px; font-size:13px; white-space:nowrap;">
-        Ver resultado
-      </button>
-    </div>`;
-}
-
+/* ── Helper de progreso ── */
 function _setProgress(pct, mensaje) {
   const bar  = document.getElementById('prog-bar');
   const step = document.getElementById('prog-step');
