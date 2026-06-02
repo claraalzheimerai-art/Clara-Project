@@ -1,0 +1,131 @@
+/* ══════════════════════════════════════
+   CLARA – App Layout (Sidebar + Main)
+   ══════════════════════════════════════ */
+
+.app-wrap {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar (Singleton) ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--charcoal);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  font-family: var(--font-display);
+  font-size: 40px;
+  color: var(--white);
+  padding: 0 1.5rem 1.5rem;
+  letter-spacing: -0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-logo span {
+  color: var(--accent);
+}
+
+/* Nav */
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 1.5rem;
+  color: var(--gray-muted);
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-main);
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+}
+
+.nav-item.active {
+  background: rgba(196, 149, 106, 0.18);
+  color: var(--accent-light);
+}
+
+/* Footer */
+.sidebar-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--gray-muted);
+  font-size: 15px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-main);
+  transition: color 0.15s;
+}
+
+.logout-btn:hover {
+  color: var(--white);
+}
+
+/* ── Main content ── */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 2rem 2.5rem;
+  min-height: 100vh;
+}
+
+/* Páginas */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+/* Cabecera de página */
+.page-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--charcoal);
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  font-size: 15px;
+  color: var(--gray-text);
+  margin-bottom: 2rem;
+}

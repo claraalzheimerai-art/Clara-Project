@@ -1,0 +1,65 @@
+/* CLARA – Design Tokens / Variables*/
+
+:root {
+  /* Paleta */
+  --beige:          #F5EFE6;
+  --beige-dark:     #EAE0D3;
+  --beige-border:   #D9CEBF;
+  --charcoal:       #1A1A18;
+  --charcoal-mid:   #2E2E2B;
+  --gray-text:      #6B6960;
+  --gray-muted:     #A09D96;
+  --white:          #FDFCFB;
+  --accent:         #C4956A;
+  --accent-dark:    #A67A52;
+  --accent-light:   #EDD9C3;
+
+  /* Auth */
+  --auth-bg:            #F0E6D8;      /* fondo exterior */
+  --auth-card-bg:       #E8E0D8;      /* fondo de la tarjeta */
+  --auth-brand-bg:      #1A1A18;      /* panel negro izquierdo */
+  --auth-input-bg:      #F5F0EB;      /* fondo de los inputs */
+  --auth-input-placeholder: #B0A99F;  /* color placeholder */
+  --auth-logo-color:    #EDD9C3;      /* color del logo en el panel */
+
+
+  /* Semánticos */
+  --success-bg:     #E6F4EA;
+  --success-text:   #2E7D32;
+  --warn-bg:        #FFF8E1;
+  --warn-text:      #F57F17;
+  --danger-bg:      #FBE9E7;
+  --danger-text:    #BF360C;
+
+  /* Tipografía */
+  --font-main:      'DM Sans', sans-serif;
+  --font-display:   'DM Serif Display', serif;
+
+  /* Layout */
+  --sidebar-w:      220px;
+
+  /* Forma */
+  --radius:         10px;
+  --radius-sm:      6px;
+  --shadow:         0 1px 3px rgba(0, 0, 0, 0.08);
+  
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--beige);
+  color: var(--charcoal);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.hidden {
+  display: none !important;
+}

@@ -1,0 +1,476 @@
+/* ══════════════════════════════════════
+   CLARA – Page-specific Styles
+   ══════════════════════════════════════ */
+
+/* ── Dashboard ── */
+.dash-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 2rem;
+}
+
+.dash-card {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dash-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.card-icon {
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.card-title {
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--charcoal);
+  margin-bottom: 4px;
+}
+
+.card-desc {
+  font-size: 15px;
+  color: var(--gray-text);
+}
+
+.dash-cta {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.dash-cta h3 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.dash-cta p {
+  font-size: 15px;
+  color: var(--gray-text);
+  margin-bottom: 1rem;
+}
+
+/* ── Análisis imagen ── */
+.analisis-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.upload-zone {
+  background: var(--white);
+  border: 1.5px dashed var(--beige-border);
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-zone:hover,
+.upload-zone.drag {
+  border-color: var(--accent);
+  background: #FDFAF7;
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid var(--beige-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 20px;
+}
+
+.upload-zone h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.upload-zone p {
+  font-size: 12px;
+  color: var(--gray-muted);
+}
+
+.file-loaded {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--beige);
+  border: 1px solid var(--beige-border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--charcoal);
+  margin-bottom: 1rem;
+}
+
+.file-chip-remove {
+  color: var(--gray-muted);
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.file-loaded p {
+  font-size: 12px;
+  color: var(--gray-text);
+}
+
+.config-panel {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.config-panel h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.config-row {
+  margin-bottom: 16px;
+}
+
+.config-row label {
+  font-size: 12px;
+  color: var(--gray-text);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.config-row select,
+.config-row input[type="number"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  background: var(--beige);
+  font-size: 13px;
+  font-family: var(--font-main);
+  color: var(--charcoal);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.config-row select:focus,
+.config-row input[type="number"]:focus {
+  border-color: var(--accent);
+}
+
+.config-hint {
+  font-size: 11px;
+  color: var(--gray-muted);
+  margin-top: 4px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--charcoal);
+  cursor: pointer;
+}
+
+.checkbox-row input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.info-note {
+  background: var(--beige);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--gray-text);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.info-note::before {
+  content: 'ℹ';
+  color: var(--accent);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* ── Resultados ── */
+.results-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.result-card {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.r-label {
+  font-size: 11px;
+  color: var(--gray-muted);
+  margin-bottom: 4px;
+}
+
+.r-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--charcoal);
+}
+
+.r-value--sm {
+  font-size: 13px;
+}
+
+.images-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.img-panel {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.img-label {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-text);
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.mri-mock {
+  width: 100%;
+  height: 220px;
+  background: #1A1A18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradcam-mock {
+  width: 100%;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+}
+
+/* Regiones cerebrales */
+.regions-section {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.regions-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--beige-border);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.region-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--beige-border);
+}
+
+.region-row:last-child {
+  border-bottom: none;
+}
+
+.region-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.region-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.region-desc {
+  font-size: 11px;
+  color: var(--gray-muted);
+  margin-top: 2px;
+}
+
+.region-note {
+  font-size: 11px;
+  color: var(--gray-muted);
+  margin-top: 4px;
+}
+
+.activation-bar {
+  height: 4px;
+  background: var(--beige-dark);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.activation-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 1s;
+}
+
+.activation-fill--warn {
+  background: #F57F17;
+}
+
+/* Leyenda Grad-CAM */
+.legend-bar {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.legend-bar h5 {
+  font-size: 12px;
+  color: var(--gray-text);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.legend-gradient {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to right, #1565C0, #00ACC1, #9CCC65, #FFA726, #E53935);
+  margin-bottom: 8px;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--gray-muted);
+}
+
+.legend-labels span:nth-child(2),
+.legend-labels span:nth-child(3) {
+  text-align: center;
+}
+
+.legend-labels span:last-child {
+  text-align: right;
+}
+
+/* Info técnica */
+.tech-info {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.tech-info h5 {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tech-row {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.t-label {
+  color: var(--gray-muted);
+  min-width: 160px;
+}
+
+.t-val {
+  color: var(--charcoal);
+  font-weight: 500;
+}
+
+/* ── Configuración ── */
+.config-section {
+  background: var(--white);
+  border: 1px solid var(--beige-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.config-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--beige-border);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.config-section-header svg {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+.config-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group--narrow {
+  max-width: 320px;
+}
