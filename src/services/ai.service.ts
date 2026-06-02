@@ -4,28 +4,44 @@ import fs from 'fs';
 import { logger } from '../utils/logger';
 import { ENV } from '../config/env.config';
 
-export interface PredictionResult {
-  filename: string;
+// ── Tipos que retorna el AI service (FastAPI) ────────────────────────────────
+
+interface AIRawResponse {
+  best_filename:   string;
   prediction: {
-    label: 'CN' | 'MCI' | 'AD';
-    confidence: number;
-    probabilities: {
-      CN: number;
-      MCI: number;
-      AD: number;
-    };
+    label:         'CN' | 'MCI' | 'AD';
+    confidence:    number;
+    probabilities: { CN: number; MCI: number; AD: number };
   };
-  gradcam: string;
+  gradcam:         string; // "data:image/png;base64,xxx"
+  mri_image:       string; // "data:image/png;base64,xxx"
+  all_predictions: { filename: string; prediction: AIRawResponse['prediction'] }[];
+  model_version:   string;
+}
+
+// ── Tipo que consume el backend internamente ─────────────────────────────────
+
+export interface PredictionResult {
+  filename:      string;
+  prediction: {
+    label:         'CN' | 'MCI' | 'AD';
+    confidence:    number;
+    probabilities: { CN: number; MCI: number; AD: number };
+  };
+  gradcam:       string; // base64 puro, sin prefijo
+  mri_image:     string; // base64 puro, sin prefijo
   model_version: string;
 }
 
 export interface HealthResult {
-  status: string;
+  status:  string;
   service: string;
   version: string;
-  env: string;
-  device: string;
+  env:     string;
+  device:  string;
 }
+
+// ── Cliente HTTP hacia el AI service ─────────────────────────────────────────
 
 class AIService {
   private client: AxiosInstance;
@@ -52,24 +68,50 @@ class AIService {
   async predict(filePath: string, filename: string): Promise<PredictionResult> {
     try {
       const form = new FormData();
-      form.append('file', fs.createReadStream(filePath), {
+
+      // El AI service espera el campo "files" (plural) como lista de archivos
+      form.append('files', fs.createReadStream(filePath), {
         filename,
         contentType: 'application/octet-stream',
       });
 
       logger.info(`Enviando imagen al AI Service: ${filename}`);
 
-      const response = await this.client.post<PredictionResult>(
+      const response = await this.client.post<AIRawResponse>(
         '/predict/',
         form,
-        { headers: form.getHeaders() }
+        { headers: form.getHeaders() },
       );
 
-      logger.info(`Predicción recibida: ${response.data.prediction.label}`);
-      return response.data;
+      const data = response.data;
 
-    } catch (error) {
-      logger.error('Error en predicción AI Service:', error);
+      // El AI service devuelve gradcam con prefijo "data:image/png;base64,"
+      // pero el frontend lo agrega al mostrar, así que lo eliminamos aquí
+      const stripPrefix = (s: string) => s.replace(/^data:image\/[a-z]+;base64,/, '');
+      const gradcam   = stripPrefix(data.gradcam);
+      const mri_image = stripPrefix(data.mri_image);
+
+      logger.info(`Predicción recibida: ${data.prediction.label} (${(data.prediction.confidence * 100).toFixed(1)}%)`);
+
+      return {
+        filename:      data.best_filename,
+        prediction:    data.prediction,
+        gradcam,
+        mri_image,
+        model_version: data.model_version,
+      };
+
+    } catch (error: any) {
+      if (error?.response) {
+        // El AI service respondió con un código de error HTTP
+        logger.error(`AI Service respondió ${error.response.status}: ${JSON.stringify(error.response.data)}`);
+        throw new Error(`AI Service error ${error.response.status}: ${error.response.data?.detail ?? JSON.stringify(error.response.data)}`);
+      } else if (error?.code) {
+        // Error de red (ECONNREFUSED, ETIMEDOUT, etc.)
+        logger.error(`Error de red hacia AI Service [${error.code}]: ${error.message}`);
+        throw new Error(`No se pudo conectar al AI Service (${error.code}). ¿Está corriendo en ${ENV.AI_SERVICE.URL}?`);
+      }
+      logger.error('Error desconocido en AI Service:', error);
       throw new Error('Error procesando imagen en AI Service');
     }
   }
