@@ -1,15 +1,13 @@
-# CLARA Backend API
-![Tests](https://img.shields.io/badge/tests-59%20passing-brightgreen)
-![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
-![Node](https://img.shields.io/badge/node-20%20LTS-green)
-![TypeScript](https://img.shields.io/badge/typescript-6.0-blue)
+# CLARA — Clinical Learning Assistant for Radiology Analysis
+
 ![License](https://img.shields.io/badge/license-academic-orange)
+![Universidad](https://img.shields.io/badge/USC-2026A-blue)
+![Status](https://img.shields.io/badge/status-en%20desarrollo-yellow)
 
-**Clinical Learning Assistant for Radiology Analysis**  
-Sistema de Diagnóstico Temprano de Alzheimer — Backend (Node.js + TypeScript)
+Sistema de diagnóstico temprano de Alzheimer mediante análisis de imágenes MRI con Deep Learning.
 
-> Universidad Santiago de Cali · Facultad de Ingeniería · Semestre 2026A  
-> Supervisor: Jair Enrique Sanclemente Castro  
+> Universidad Santiago de Cali · Facultad de Ingeniería · Semestre 2026A
+> Supervisor: Jair Enrique Sanclemente Castro
 > Equipo: Nahia Montoya · Miguel Arcila · Óscar Barón
 
 ---
@@ -28,84 +26,68 @@ Sistema de Diagnóstico Temprano de Alzheimer — Backend (Node.js + TypeScript)
                                        │   + torchcam         │
                                        └──────────────────────┘
 ```
+## Estructura del Repositorio
 
-## Stack Tecnológico
-
-| Capa | Tecnología |
-|---|---|
-| Runtime | Node.js 20 LTS |
-| Lenguaje | TypeScript |
-| Framework | Express |
-| Comunicación IA | Axios → clara-ai-service (Python/FastAPI) |
-| Subida de archivos | Multer |
-| Tiempo real | Socket.IO |
-| Logging | Winston |
-| Testing | Jest + Supertest |
-
-## Estructura del Proyecto
-```
-Clara-Project\Backend
-├── src/
-│   ├── config/            # Variables de entorno y configuración Multer
-│   ├── controllers/       # Lógica de endpoints
-│   ├── middlewares/       # CORS, errores, validación
-│   ├── models/            # Definición de modelos de datos y esquemas de la base de datos
-│   ├── routes/            # Definición de rutas
-│   ├── scripts/           # Scripts auxiliares (migraciones, seeds, automatizaciones, etc)
-│   ├── services/          # Cliente HTTP al microservicio IA
-│   ├── test/
-│       ├── unit/          # Pruebas unitarias
-│       └── integration/   # Pruebas de integración
-│   ├── types/             # Tipos TypeScript compartidos
-│   ├── utils/             # Logger y manejo de archivos
-│   ├── app.ts             # Configuración Express
-│   ├── server.ts          # Punto de entrada
-│   └── socket.ts          # Configuración Socket.IO
-│
-├── uploads/temp/          # Archivos temporales (auto-eliminados)
-├── .env.example           # Plantilla de variables de entorno
-└── tsconfig.json
-```
-
-## Endpoints
-
-| Método | Ruta | Descripción |
+| Carpeta | Descripción | Tecnología |
 |---|---|---|
-| `GET` | `/api/v1/analysis/health` | Estado del backend y AI Service |
-| `POST` | `/api/v1/analysis/upload` | Analizar imagen MRI |
+| `Backend/` | API REST, autenticación JWT, historial | Node.js + TypeScript |
+| `Frontend/` | Interfaz para el médico | HTML/CSS/JS |
+| `IA-service/` | Clasificación MRI + Grad-CAM | Python + PyTorch |
+
+## Módulos Implementados
+
+### Backend
+- API REST con Express + TypeScript
+- Autenticación JWT (registro, login, verificación de email, reset de contraseña)
+- Módulo de historial de análisis
+- Integración HTTP con IA-service
+- Socket.IO para resultados en tiempo real
+- Documentación Swagger/OpenAPI
+- 83 tests — cobertura 100%
+
+### IA-service
+- Clasificación de imágenes MRI (CN / MCI / AD)
+- Modelo ResNet50 con fine-tuning
+- Mapas de explicabilidad Grad-CAM
+- Pipeline de preprocesamiento OASIS-1
+
+### Frontend
+- Interfaz de login y registro
+- Dashboard con estadísticas
+- Módulo de análisis MRI
+- Visualización de resultados y Grad-CAM
+
+## Clasificación Clínica
+
+| Clase | Descripción |
+|---|---|
+| `CN` | Cognitivamente Normal |
+| `MCI` | Deterioro Cognitivo Leve |
+| `AD` | Enfermedad de Alzheimer |
 
 ## Instalación
-```bash
-# 1. Clonar el repositorio
-git clone https://github.com/claraalzheimerai-art/Clara-Project.git
 
-cd Clara-Project
+Cada módulo tiene su propio README con instrucciones detalladas:
 
-# 2. Instalar dependencias
-npm install
+- [Backend/README.md](./Backend/README.md)
+- [IA-service/README.md](./IA-service/README.md)
+- [Frontend/README.md](./Frontend/README.md)
 
-# 3. Configurar variables de entorno
-cp .env.example .env
+## Ramas de Trabajo
 
-# 4. Iniciar en modo desarrollo
-npm run dev
-```
-
-## Scripts
-
-| Script | Descripción |
-|---|---|
-| `npm run dev` | Servidor con hot-reload |
-| `npm run build` | Compilar TypeScript |
-| `npm start` | Ejecutar build compilado |
-| `npm test` | Ejecutar pruebas |
+| Rama | Integrante | Módulo |
+|---|---|---|
+| `Backend` | Nahia Montoya | API REST + Auth + BD |
+| `Ai-project` | Óscar Barón | IA + Modelo + Dataset |
+| `Frontend` | Miguel Arcila | Interfaz de usuario |
 
 > Los cambios se integran a `main` únicamente mediante Pull Request con aprobación.
 
 ## Privacidad y Cumplimiento Legal
 
-- **Ley 1581 de 2012** — Las imágenes MRI se eliminan del servidor inmediatamente tras retornar el resultado.
+- **Ley 1581 de 2012** — Las imágenes MRI se eliminan del servidor tras cada análisis.
 - **Decreto 1377 de 2013** — No se almacena ningún dato médico de forma permanente.
+- Uso restringido al entorno académico de la Universidad Santiago de Cali.
 
 ---
 
